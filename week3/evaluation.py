@@ -11,7 +11,8 @@ import matplotlib.patches as mpatches
 import json
 import collections
 import os
-
+import sys
+sys.path.append('../')
 import configuration as conf
 
 operativeSystem = os.name

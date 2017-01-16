@@ -1,6 +1,8 @@
 #!/usr/bin/env
 import numpy as np
 import cv2
+import sys
+sys.path.append('../')
 import configuration as conf
 import glob
 import os
@@ -173,4 +175,3 @@ if __name__ == "__main__":
     print ('--- DataSet: ' + dataset)
     print ('--- Rho: ' + str(conf.OptimalRhoParameter[dataset]) + ' --- ' + ' Alpha: ' + str(conf.OptimalAlphaParameter[dataset]))
     print ('--- F1 Adaptative Color Gaussian Model: ' + str(F1))
-

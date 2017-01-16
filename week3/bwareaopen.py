@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def filterImage(im,P):
+def bwareaopen(im,P):
 
     if isinstance(im,str):
         im = cv2.imread(im,0)
