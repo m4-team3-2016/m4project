@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Sat Jan 14 17:42:53 2017
+
+@author: Group 3
+"""
 
 import cv2
 import os
@@ -50,7 +55,7 @@ def bgr_to_rgs(img):
     return rgs, RGS
     
     
-def rgs_thresholding(rgs, th=np.array([0,27])): #0,27 50,76
+def rgs_thresholding(rgs, th=np.array([0,27])):
     rows = len(rgs)
     cols = len(rgs[0])
     channels = 3
@@ -110,14 +115,13 @@ def shadow_removal(frame):
 def inmask_shadow_removal(frame, mask):
     
     # Apply the mask to the original image
+    # If the mask is 3d
     # filter_img = frame[:,:,:] * np.divide(mask, 255.0, dtype=np.float32)
-    
-    
     # If the mask is 2d
     filter_img = np.zeros([frame.shape[0],frame.shape[1],frame.shape[2]])
-    filter_img[:,:,0] = frame[:,:,0] * mask # np.divide(mask, 255.0, dtype=np.float32)
-    filter_img[:,:,1] = frame[:,:,1] * mask # np.divide(mask, 255.0, dtype=np.float32)
-    filter_img[:,:,2] = frame[:,:,2] * mask # np.divide(mask, 255.0, dtype=np.float32)
+    filter_img[:,:,0] = frame[:,:,0] * mask[:,:]
+    filter_img[:,:,1] = frame[:,:,1] * mask[:,:]
+    filter_img[:,:,2] = frame[:,:,2] * mask[:,:]
     
     # Convert from BGR to RGS/rgS color space
     filter_img, RGS = bgr_to_rgs(filter_img)
@@ -126,14 +130,12 @@ def inmask_shadow_removal(frame, mask):
     filter_img = rgs_thresholding(filter_img, np.array([0,25]))
     
     # Generate the output mask
-    # if 3d
+    # if the mask is 3d
     # output_mask =  (filter_img[:,:,:] == 0) * mask[:,:,:]
-    # if 2d
+    # if the mask is 2d
     output_mask = np.zeros([frame.shape[0],frame.shape[1]])
-    output_mask[:,:] =  (filter_img[:,:,0] == 0) * mask[:,:]
-    #output_mask[:,:,1] =  (filter_img[:,:,1] == 0) * mask[:,:]
-    #output_mask[:,:,2] =  (filter_img[:,:,2] == 0) * mask[:,:]
-    
+    output_mask[:,:] =  (filter_img[:,:,0] == 0) * mask[:,:] + (filter_img[:,:,1] == 0) * mask[:,:] + (filter_img[:,:,2] == 0) * mask[:,:]
+        
     return output_mask
 
 
@@ -154,12 +156,10 @@ if __name__ == "__main__":
     mask = mask[:,:,0]
     mask = mask / 255.0
     
-
-    # Look for the best threshold
+    # Generate the output mask
     # inpaint = shadow_removal(original)
     output_mask = inmask_shadow_removal(original,mask)
     
- 
     # cv2.imwrite('test/inpaint.png', inpaint)
     # cv2.imwrite('test/filter_img.png', filter_img) 
     # cv2.imwrite('test/background.png', background)  
