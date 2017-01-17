@@ -32,15 +32,17 @@ def evaluateImage(queryFile,gtFile):
 
     predictionVector = []
     gtVector = []
+    predictionValues = np.unique(queryImg).tolist()
+    if predictionValues == [0,255]:
+        queryImg = queryImg/255
     for pixel in range(0,queryImg.size):
         predictionVector.append(queryImg.flat[pixel])
     for pixel in range(0,gt.size):
-        gtVector.append(conf.highwayMapping[gt.flat[pixel]])
+        gtVector.append(conf.mapping[gt.flat[pixel]])
 
     if len(set(predictionVector)) != len(set(gtVector)):
 
         predictionVector = [el if el != 2 else 1 for el in predictionVector]
-
 
     confMat = confusion_matrix(gtVector,predictionVector)
     if len(confMat) == 1:
@@ -96,7 +98,7 @@ def evaluateFolder(folderPath,ID = "Highway"):
     with open(conf.outputFile,"w") as f:
         json.dump(results,f)
 
-    if (conf.highwayMapping["Classes"] == 2):
+    if (conf.mapping["Classes"] == 2):
         TN = sum([results[el]["Confusion Matrix"][0][0] for el in results.keys()])
         FP = sum([results[el]["Confusion Matrix"][0][1] for el in results.keys()])
         FN = sum([results[el]["Confusion Matrix"][1][0] for el in results.keys()])
@@ -121,9 +123,9 @@ def evaluateFolder(folderPath,ID = "Highway"):
         precision = 0
         recall = 0
         # Precision and recall for each label:
-        for label in range(0,conf.highwayMapping["Classes"]):
+        for label in range(0,conf.mapping["Classes"]):
             TP = sum([results[el]["Confusion Matrix"][label][label] for el in results.keys()])
-            for i in range(0,conf.highwayMapping["Classes"]):
+            for i in range(0,conf.mapping["Classes"]):
                 if(i == label):
                     continue
                 FP += sum([results[el]["Confusion Matrix"][i][label] for el in results.keys()])
@@ -158,7 +160,7 @@ def temporalEvaluation():
         results = json.load(f)
 
     orderedResults = collections.OrderedDict(sorted(results.items()))
-    if (conf.highwayMapping["Classes"] == 2):
+    if (conf.mapping["Classes"] == 2):
         TP = [orderedResults[el]["Confusion Matrix"][1][1] for el in orderedResults.keys()]
         P  = [orderedResults[el]["Confusion Matrix"][1][1] + orderedResults[el]["Confusion Matrix"][1][0] for el in orderedResults.keys()]
         F1 = [orderedResults[el]["Fscore"][-1] for el in orderedResults.keys()]
@@ -169,7 +171,7 @@ def temporalEvaluation():
         results = json.load(f)
 
     orderedResults = collections.OrderedDict(sorted(results.items()))
-    if (conf.highwayMapping["Classes"] == 2):
+    if (conf.mapping["Classes"] == 2):
         TPb = [orderedResults[el]["Confusion Matrix"][1][1] for el in orderedResults.keys()]
 
         F1b = [orderedResults[el]["Fscore"][-1] for el in orderedResults.keys()]
@@ -219,12 +221,12 @@ def methodsComparison():
 
     for w in range(0,width-1):
         for h in range(0,height-1):
-            if(conf.highwayMapping[gt[h,w,0]] == 0):
+            if(conf.mapping[gt[h,w,0]] == 0):
                 if(imA[h,w,0] == 1):
                     imA[h,w,:] = [0,0,255]
                 if(imB[h,w,0] == 1):
                     imB[h,w,:] = [0,0,255]
-            if(conf.highwayMapping[gt[h,w,0]] == 1):
+            if(conf.mapping[gt[h,w,0]] == 1):
                 if(imA[h,w,0] == 1):
                     imA[h,w,:] = [0,255,0]
                 else:

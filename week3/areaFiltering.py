@@ -5,14 +5,17 @@ import json
 from numpy import trapz
 import sys
 import glob
-sys.path.append('../week2')
+#sys.path.append('../week2')
+sys.path.append('../tools')
 import evaluation as ev
 import bwareaopen
 
-dataset = '../../../datasets-week3/highwayDataset/'
+operativeSystem = os.name
+
+dataset = '../../../datasets-week3/trafficDataset/'
 files = glob.glob(dataset + '*')
-ID = "Highway"
-#cv2.imshow('test',cv2.imread(files[0]))
+ID = "Traffic"
+
 results = dict()
 TP = []
 TN = []
@@ -22,11 +25,18 @@ Precision = []
 Recall = []
 F1  = []
 
-for p in range(0,1000,20):
+
+for p in range(0,200,10):
     print "Filtering objects smaller than " + str(p)
     for f in files:
-        cv2.imwrite('results/areaFiltering/' + ID + f.split('/')[-1],bwareaopen.bwareaopen(files[0],p))
-        #print 'results/areaFiltering/' + f.split('/')[-1]
+        out = bwareaopen.bwareaopen(f,p);
+        if operativeSystem == 'posix':
+            #posix systems go here: ubuntu, debian, linux mint, red hat, etc, even osX (iew)
+            cv2.imwrite('results/areaFiltering/' + ID + f.split('/')[-1],out)
+
+        else:
+            #say hello to propietary software
+            cv2.imwrite('results/areaFiltering/' + ID + f.split('\\')[-1], out)
     tp,tn,fp,fn,precision,recall,f1 = ev.evaluateFolder('results/areaFiltering/',ID)
     for f in glob.glob('results/areaFiltering/*'):
         os.remove(f)

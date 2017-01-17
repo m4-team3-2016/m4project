@@ -83,4 +83,4 @@ highwayBinaryMapping1.update({highwayLabelsInv['Motion']:1})
 highwayBinaryMapping1.update({"Classes":2})
 
 # Mapping used. Change this line to change the mapping
-highwayMapping = highwayBinaryMapping1
+mapping = highwayBinaryMapping1
