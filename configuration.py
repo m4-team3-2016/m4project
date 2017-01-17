@@ -8,13 +8,24 @@ OptimalAlphaParameter = {}
 OptimalRhoParameter = {}
 folders = {}
 
+isMac = True
+
 isHoleFilling = True
+isMorphology = True
 fourConnectivity = False # If it is set to False, it will be 8 connectivity
+isShadowremoval = True
+
+noise_filter_size = 5
+vert_filter_size = 20
+horz_filter_size = 20
 
 # Best perfomance depending on the dataset that is trained
 OptimalColorSpaces["Highway"]   = 'LUV'
 OptimalColorSpaces["Fall"]      = 'LUV'
 OptimalColorSpaces["Traffic"]   = 'YCrCb'
+
+# ShadowRemoval method only works with BGR components
+OptimalColorSpaces["ShadowRemoval"]   = 'BGR'
 
 OptimalAlphaParameter["Highway"]   = 1.8
 OptimalAlphaParameter["Fall"]      = 3.6
