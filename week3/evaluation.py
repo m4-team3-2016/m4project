@@ -87,7 +87,6 @@ def evaluateFolder(folderPath,ID = "Highway"):
             gtFile = conf.folders[ID+"GT"] + 'gt' + base_name + '.png'
         # print ('===================')
         # print (gtFile)
-
         confusion,precision,recall,f1,auc = evaluateImage(queryFile,gtFile)
 
         accuracy = float(confusion.trace())/np.sum(confusion)
