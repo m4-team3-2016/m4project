@@ -8,7 +8,7 @@ OptimalAlphaParameter = {}
 OptimalRhoParameter = {}
 folders = {}
 
-isHoleFilling = False
+isHoleFilling = True
 fourConnectivity = False # If it is set to False, it will be 8 connectivity
 
 # Best perfomance depending on the dataset that is trained
