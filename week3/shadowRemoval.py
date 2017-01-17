@@ -50,24 +50,23 @@ def bgr_to_rgs(img):
     RGS = RGS.transpose(1,2,0)
     
     # Turn to black the bottom part of the image
-    rgs[(int(rgs.shape[0]/1.5)):,:,:] = 0
+    # rgs[(int(rgs.shape[0]/1.5)):,:,:] = 0
     
     return rgs, RGS
     
     
 def rgs_thresholding(rgs, th=np.array([0,27])):
-    rows = len(rgs)
-    cols = len(rgs[0])
-    channels = 3
-    filtered_image = np.zeros([rows,cols,channels])
+    checkLogicalOne = rgs[:,:,2] >= th[0]
+    checkLogicalTwo = rgs[:,:,2] < th[1]
+    checkLogical = np.bitwise_and(checkLogicalOne,checkLogicalTwo)
+    check = checkLogical.astype(np.uint8)
     
-    # Extract the shadow map by thesholding the S component of the rgs image 
-    for x in range(rows): # for each row
-        for y in range(cols): # for each column
-            for c in range(channels): # for each color channel
-                if rgs[x,y,2] >= th[0] and rgs[x,y,2] < th[1]:
-                    filtered_image[x,y,c] = rgs[x,y,c]
+    one =  np.multiply(check,rgs[:,:,0])
+    two =  np.multiply(check,rgs[:,:,1])
+    three =  np.multiply(check,rgs[:,:,2])
     
+    filtered_image= np.stack([one, two, three], axis=-1)
+        
     return filtered_image
 
    
@@ -78,6 +77,7 @@ def generate_mask_and_inpaint_shadows(original_img, filtered_img):
     
     # Generate the mask to inpaint given the shadow mask
     mask_to_inpaint = np.array(np.zeros([rows,cols]), dtype=np.uint8)
+    
     for x in range(rows): # for each row
         for y in range(cols): # for each column
             for c in range(channels): # for each color channel
@@ -118,10 +118,11 @@ def inmask_shadow_removal(frame, mask):
     # If the mask is 3d
     # filter_img = frame[:,:,:] * np.divide(mask, 255.0, dtype=np.float32)
     # If the mask is 2d
-    filter_img = np.zeros([frame.shape[0],frame.shape[1],frame.shape[2]])
-    filter_img[:,:,0] = frame[:,:,0] * mask[:,:]
-    filter_img[:,:,1] = frame[:,:,1] * mask[:,:]
-    filter_img[:,:,2] = frame[:,:,2] * mask[:,:]
+    one = np.multiply(mask,frame[:,:,0])
+    two = np.multiply(mask,frame[:,:,1])
+    three = np.multiply(mask,frame[:,:,2])
+    
+    filter_img= np.stack([one, two, three], axis=-1)
     
     # Convert from BGR to RGS/rgS color space
     filter_img, RGS = bgr_to_rgs(filter_img)
@@ -133,9 +134,8 @@ def inmask_shadow_removal(frame, mask):
     # if the mask is 3d
     # output_mask =  (filter_img[:,:,:] == 0) * mask[:,:,:]
     # if the mask is 2d
-    output_mask = np.zeros([frame.shape[0],frame.shape[1]])
-    output_mask[:,:] =  (filter_img[:,:,0] == 0) * mask[:,:] + (filter_img[:,:,1] == 0) * mask[:,:] + (filter_img[:,:,2] == 0) * mask[:,:]
-        
+    output_mask = np.multiply(mask, filter_img[:,:,2] == 0)
+    
     return output_mask
 
 
@@ -158,15 +158,4 @@ if __name__ == "__main__":
     
     # Generate the output mask
     # inpaint = shadow_removal(original)
-    output_mask = inmask_shadow_removal(original,mask)
-    
-    # cv2.imwrite('test/inpaint.png', inpaint)
-    # cv2.imwrite('test/filter_img.png', filter_img) 
-    # cv2.imwrite('test/background.png', background)  
-    # cv2.imwrite('test/original.png', original)  
-    cv2.imwrite('test/input_mask_2d.png', mask)  
-    cv2.imwrite('test/output_mask.png', output_mask) 
-    # cv2.imwrite('test/mask_to_inpaint.png', mask_to_inpaint)
-    # cv2.imwrite('test/rgs.png', rgs)
-    # cv2.imwrite('test/RGSM.png', RGS)
-    # cv2.imwrite('test/'+str(th[0])+'_'+str(th[1])+'.png', filtered_img)
+    output_mask = inmask_shadow_removal(original, mask)
