@@ -56,9 +56,15 @@ for d,dGT in zip(datasets,datasetsGT):
             continue
         print "Dataset " + d  +", alfa: "  +str(alfa)
 
-        mu, sigma = acg.obtainGaussianModell(d, conf.OptimalColorSpaces[d])
-        acg.foreground_substraction(d, dGT, mu, sigma, alfa, conf.OptimalRhoParameter[d], conf.OptimalColorSpaces[d])
-        TPi,TNi,FPi,FNi,precisioni,recalli,F1i = ev.evaluateFolder("./results/imagesAdaptativeGaussianModelling/",d)
+        if conf.isShadowremoval:
+            mu, sigma = acg.obtainGaussianModell(d, conf.OptimalColorSpaces["ShadowRemoval"])
+            acg.foreground_substraction(d, dGT, mu, sigma, alfa, conf.OptimalRhoParameter[d], conf.OptimalColorSpaces["ShadowRemoval"])
+            TPi,TNi,FPi,FNi,precisioni,recalli,F1i = ev.evaluateFolder("./results/imagesAdaptativeGaussianModelling/",d)
+        else:
+            mu, sigma = acg.obtainGaussianModell(d, conf.OptimalColorSpaces[d])
+            acg.foreground_substraction(d, dGT, mu, sigma, alfa, conf.OptimalRhoParameter[d], conf.OptimalColorSpaces[d])
+            TPi,TNi,FPi,FNi,precisioni,recalli,F1i = ev.evaluateFolder("./results/imagesAdaptativeGaussianModelling/",d)
+        
         performance = dict()
         performance['Alfa'] = alfa
         performance['TP'] = TPi
