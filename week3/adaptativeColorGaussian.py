@@ -8,7 +8,8 @@ import glob
 import os
 import evaluation as ev
 import holefillingFunction as hf
-
+import shadowRemoval as sr
+import morphology as mp
 
 operativeSystem = os.name
 (CVmajor, CVminor, _) = cv2.__version__.split(".")
@@ -118,9 +119,22 @@ def foreground_substraction(ID, IDGT, mu, sigma, alpha, rho, colorSpace = 'gray'
         groundTruth = np.abs(groundTruth[:, :] > 0)
         outError = np.bitwise_xor(out, groundTruth)
 
-
         if conf.isHoleFilling:
             out = hf.holefilling(out, conf.fourConnectivity)
+
+        if conf.isMorphology:
+            out = mp.apply_morphology_noise(out, conf.noise_filter_size)
+            out = mp.apply_morphology_vertline(out, conf.vert_filter_size)
+            out = mp.apply_morphology_horzline(out, conf.horz_filter_size)
+            if ID == "Traffic":
+                out = mp.apply_morphology_little(out, conf.vert_filter_size, conf.horz_filter_size)
+
+        if conf.isShadowremoval:
+            sr.inmask_shadow_removal(frame, out)
+
+        if conf.isHoleFilling and conf.isShadowremoval:
+            out = hf.holefilling(out, conf.fourConnectivity)
+
 
         outError = outError.astype(np.uint8)
         groundTruth = groundTruth.astype(np.uint8)
@@ -139,8 +153,10 @@ def foreground_substraction(ID, IDGT, mu, sigma, alpha, rho, colorSpace = 'gray'
         #OS dependant writing
         if operativeSystem == 'posix':
             #posix systems go here: ubuntu, debian, linux mint, red hat, etc, even osX (iew)
-            cv2.imwrite('./results/imagesAdaptativeGaussianModelling/' + ID + file_name.split('/')[-1] + '.png', out)
-
+            if conf.isMac:
+                cv2.imwrite('./results/imagesAdaptativeGaussianModelling/' + ID + file_name.split('/')[-1][0:-4] + '.png', out)
+            else:
+                cv2.imwrite('./results/imagesAdaptativeGaussianModelling/' + ID + file_name.split('/')[-1] + '.png', out)
         else:
             #say hello to propietary software
             cv2.imwrite('./results/imagesAdaptativeGaussianModelling/' + ID + file_name.split('\\')[-1].split('.')[0] + '.png', out)
@@ -151,8 +167,8 @@ def foreground_substraction(ID, IDGT, mu, sigma, alpha, rho, colorSpace = 'gray'
 
 
 if __name__ == "__main__":
-    dataset    = "Traffic"
-    datasetGT  = "TrafficGT"
+    dataset    = "Fall"
+    datasetGT  = "FallGT"
 
     # Check if 'results' folder exists.
     results_path = "./results"
@@ -167,10 +183,22 @@ if __name__ == "__main__":
     if not os.path.exists(aG_path):
         os.makedirs(aG_path)
 
-    mu, sigma = obtainGaussianModell(dataset, conf.OptimalColorSpaces[dataset])
-    foreground_substraction(dataset, datasetGT, mu, sigma,
-                    conf.OptimalAlphaParameter[dataset], conf.OptimalRhoParameter[dataset], conf.OptimalColorSpaces[dataset])
-    aux, aux, aux, aux, aux, aux, F1 = ev.evaluateFolder(aG_path, dataset)
+    if conf.isShadowremoval:
+        print('--- obtainGaussianModell')
+        mu, sigma = obtainGaussianModell(dataset, conf.OptimalColorSpaces["ShadowRemoval"])
+        print('--- foreground_substraction')
+        foreground_substraction(dataset, datasetGT, mu, sigma,
+                        conf.OptimalAlphaParameter[dataset], conf.OptimalRhoParameter[dataset], conf.OptimalColorSpaces["ShadowRemoval"])
+        print('--- evaluateFolder')
+        aux, aux, aux, aux, aux, aux, F1 = ev.evaluateFolder(aG_path, dataset)
+    else:
+        print('--- obtainGaussianModell')
+        mu, sigma = obtainGaussianModell(dataset, conf.OptimalColorSpaces[dataset])
+        print('--- foreground_substraction')
+        foreground_substraction(dataset, datasetGT, mu, sigma,
+                        conf.OptimalAlphaParameter[dataset], conf.OptimalRhoParameter[dataset], conf.OptimalColorSpaces[dataset])
+        print('--- evaluateFolder')
+        aux, aux, aux, aux, aux, aux, F1 = ev.evaluateFolder(aG_path, dataset)
 
     print ('--- DataSet: ' + dataset)
     print ('--- Rho: ' + str(conf.OptimalRhoParameter[dataset]) + ' --- ' + ' Alpha: ' + str(conf.OptimalAlphaParameter[dataset]))
