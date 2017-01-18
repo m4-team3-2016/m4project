@@ -130,7 +130,7 @@ def foreground_substraction(ID, IDGT, mu, sigma, alpha, rho, colorSpace = 'gray'
                 out = mp.apply_morphology_little(out, conf.vert_filter_size, conf.horz_filter_size)
 
         if conf.isShadowremoval:
-            sr.inmask_shadow_removal(frame, out)
+            out = sr.inmask_shadow_removal(frame, out)
 
         if conf.isHoleFilling and conf.isShadowremoval:
             out = hf.holefilling(out, conf.fourConnectivity)
