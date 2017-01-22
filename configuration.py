@@ -95,3 +95,8 @@ highwayBinaryMapping1.update({"Classes":2})
 
 # Mapping used. Change this line to change the mapping
 mapping = highwayBinaryMapping1
+
+
+################### OF  ####################
+OFblockSize = 2
+OFsearchArea = 2
