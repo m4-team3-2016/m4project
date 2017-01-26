@@ -28,7 +28,7 @@ def readImagesFromVideo(videoFile,frameID1,frameID2):
     return frame1,frame2
 
 
-def LukasKanade(videoFile):
+def LukasKanadeVideo(videoFile):
     frame1,frame2 = readImagesFromVideo(videoFile,280,281)
     height = frame1.shape[0]
     width = frame1.shape[1]
@@ -66,7 +66,15 @@ def LukasKanade(videoFile):
     cv2.destroyAllWindows()
     cap.release()
 
-def denseOpticalFlow(videoFile):
+def LukasKanade(frame1,frame2):
+    feature_params = dict( maxCorners = 100,qualityLevel = 0.1,minDistance = 5,blockSize = 7 )
+    lk_params = dict( winSize  = (15,15), maxLevel = 2, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+    p0 = cv2.goodFeaturesToTrack(cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY), mask = None, **feature_params)
+    p1, st, err = cv2.calcOpticalFlowPyrLK(cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY), cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY), p0, None, **lk_params)
+
+    return p0,p1
+
+def FarnebackVideo(videoFile):
 
     cap = cv2.VideoCapture(videoFile)
     ret, frame1 = cap.read()
@@ -132,6 +140,28 @@ def denseOpticalFlow(videoFile):
     videoOutput.release()
     cv2.destroyAllWindows()
 
+def FarnebackOF(frame1,frame2):
+    #All these parameters should be at a configuration file.
+    flow = cv2.calcOpticalFlowFarneback(prvs,nextImg, flow, 0.5, 5, 15, 9, 7, \
+            1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
+    return flow
+
+
+# Block Matching stuff:
+
+# The fundamental function of Block Matching
+# Given a list of :
+# x[0] --> the block to be searched (PxP np.array)
+# x[1] --> the area where we have to search it (2P+Nx2P+N np.array)
+# x[2] --> the rows and cols of x[1] in the image
+# x[3] --> the size of the image
+# returns [dx,dy], the flow of that block in pixels. Note that x[1] may not
+# coincide with the ranges of x[2], i.e.: if the search area indexes are
+# [[-2:6],[-2:6]] this should be a 8x8 array. However, as the image does not
+# have negative pixel indexes, the searchArea will only be 6x6. The knowledge
+# of these search area indexes and image shape are used to compensate the found
+# indexes in the different cases (image borders, corners and interior regions)
+
 def findCorrespondentBlock(x):
 
     originBlock = x[0]
@@ -145,32 +175,46 @@ def findCorrespondentBlock(x):
 
 
     assert originBlock.shape[0] == originBlock.shape[1]
+    # To ease understanding
     N = conf.OFblockSize
     P = conf.OFsearchArea
 
+    # The famous adjustment. For an interior region, the adjustment will be
+    # [P,P], and for regions near the x = 0 and y = 0 axis, the adjustment
+    # is computed
     adjY = -(P + min(0,yRange[0]))
     adjX = -(P + min(0,xRange[0]))
 
+    #The range of look to avoid "index out of range" stuff. Note that the range
+    # is 2P +1 unless we are in a border or corner.
     topY = 1 + 2 * P + min(0,yRange[0]) - max(0,yRange[1] - imHeight)
     topX = 1 + 2 * P + min(0,xRange[0]) - max(0,xRange[1] - imWidth)
     score = 10000.0
 
+    #Block matching happens here:
     for x in range(0,topX):
         for y in range(0,topY):
-            #print str(x) + "/" + str(topX-1) + ", " + str(y) + "/" + str(topY-1)
             temp = compareRegions(originBlock,searchArea[y:y+originBlock.shape[0],x:x+originBlock.shape[1]])
             if temp < score:
                 score = temp
                 dx = x
                 dy = y
 
-    #Coordinates correction
+    #Coordinates correction with the previous adjustment.
     return [dx + adjX ,dy + adjY]
 
 
+# For the moment only the good old square difference between regions is computed.
+# If we want to add more, this is the spot. (Use a configuration parameter
+# please.)
 def compareRegions(block1,block2):
     return np.sqrt(sum(sum((block1-block2)**2)))
 
+# Obtain the indexes of the blocks to compare. This function returns the indexes
+# corresponding to the division into blocks of PxP and regions of 2P+1x2P+1.
+# Note that negative indexes can be (and are) returned.
+
+# DO NOT CHANGE THIS BECAUSE THE INDEXES ARE A HORROR TO DEBUG
 def obtainIndexesImage(shape,blockSize= conf.OFblockSize,searchArea= conf.OFsearchArea):
     blockIndexes = []
     searchAreaIndexes = []
@@ -185,6 +229,12 @@ def obtainIndexesImage(shape,blockSize= conf.OFblockSize,searchArea= conf.OFsear
             ySearchRange = [blockSize*y-searchArea,blockSize*(y+1) + searchArea]
             searchAreaIndexes.append([ySearchRange,xSearchRange])
     return blockIndexes,searchAreaIndexes
+
+# Computes the optical flow between images VERY fast using the multiprocessing
+# capabilities of Python. IT divides the frame1 into blocks and frame2 into
+# searchAreas that are processed in parallel. There is commented code that
+# corresponds to the same code, but computed sequentally, just in case it does
+# not work on your Windows machines.
 
 def opticalFlowBW(frame1,frame2):
     width = frame1.shape[1]
@@ -205,6 +255,13 @@ def opticalFlowBW(frame1,frame2):
           for b,sY,sX,c in zip(blockIndexes,ySearchIndexes,xSearchIndexes,searchAreaIndexes)]
     OF = p.map(findCorrespondentBlock,x)
 
+    # Non-multiprocesing solution:
+    '''
+    OF = []
+    for el in x:
+        OF.append(findCorrespondentBlock(x))
+    '''
+    
     OFx = np.reshape(np.asarray([el[0] for el in OF]),(newHeight,newWidth))
     OFy = np.reshape(np.asarray([el[1] for el in OF]),(newHeight,newWidth))
 
