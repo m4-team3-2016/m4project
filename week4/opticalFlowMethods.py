@@ -10,13 +10,9 @@ import sys
 sys.path.append('../')
 
 
-RoI = conf.RoI
-temporalRoI = conf.temporalRoI
-
 def readImagesFromVideo(videoFile,frameID1,frameID2):
 
     cap = cv2.VideoCapture(videoFile)
-    ret = True
 
     cap.set(1,frameID1)
     ret,frame1 = cap.read()
@@ -78,13 +74,12 @@ def FarnebackVideo(videoFile):
 
     cap = cv2.VideoCapture(videoFile)
     ret, frame1 = cap.read()
-    frame1 = frame1[:300,250:650,:]
     prvs = cv2.cvtColor(frame1,cv2.COLOR_BGR2GRAY)
     hsv = np.zeros_like(frame1)
     hsv[:,:,1] = 255
 
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    videoOutput = cv2.VideoWriter('OpticalFlowTrain.avi',fourcc, 10.0, (frame1.shape[1],frame1.shape[0]),True)
+    videoOutput = cv2.VideoWriter('output.avi',fourcc, 10.0, (frame1.shape[1],frame1.shape[0]),True)
 
 
     idx = 0
@@ -94,48 +89,38 @@ def FarnebackVideo(videoFile):
         ret, frame2 = cap.read()
         if ret == False:
             break
-        frame2 = frame2[:300,250:650,:]
         nextImg = cv2.cvtColor(frame2,cv2.COLOR_BGR2GRAY)
-        '''if np.mod(idx,2) != 0:
-            prvs = nextImg
-            idx = idx + 1
-            continue'''
-        if idx < 200 or np.abs((prvs-nextImg).mean()) < 5:
-            prvs = nextImg
-            idx = idx + 1
-            continue
-        else:
-            flow = cv2.calcOpticalFlowFarneback(prvs,nextImg, flow, 0.5, 5, 15, 9, 7, 1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
 
-            mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
-            hsv[...,0] = ang*180/np.pi/2
-            hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
-            #hsv[...,2] = 255
-            bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR_FULL)
-            mask = np.zeros_like(frame2)
-            for h in range(0,frame2.shape[1],5):
-                for w in range(0,frame2.shape[0],5):
-                    cv2.arrowedLine(mask,(h,w),(h+int(flow[w,h,0]),w+int(flow[w,h,1])),(int(bgr[w,h,0]),int(bgr[w,h,1]),int(bgr[w,h,2])),1)
-            outputImage = cv2.add(frame2,mask)
-            cv2.arrowedLine(outputImage,(int(outputImage.shape[1]/2),int(outputImage.shape[0]/2)),(int(outputImage.shape[1]/2 + max(0,mag.mean()) * np.cos(ang.mean())),int(outputImage.shape[0]/2 + max(0,mag.mean()) * np.sin(ang.mean()))),(0,0,255),1)
-            cv2.namedWindow('Next image', cv2.WINDOW_NORMAL)
-            cv2.namedWindow('OF', cv2.WINDOW_NORMAL)
-            #cv2.setWindowProperty('Next image',cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-            cv2.putText(outputImage,"Frame:" + str(idx),(50,50),1,1,(255,255,255))
-            cv2.imshow('Next image',outputImage)
-            cv2.putText(bgr,"Mean diff:" + str(np.abs((prvs-nextImg).mean())),(50,100),1,1,(255,255,255))
-            cv2.putText(bgr,"Mean movement:" + str(mag.mean()),(50,50),1,1,(255,255,255))
-            cv2.putText(bgr,"Mean orientation:" + str(hsv[...,0].mean()),(50,150),1,1,(255,255,255))
-            cv2.imshow('OF',bgr)
-            videoOutput.write(outputImage)
-            k = cv2.waitKey(1) & 0xff
-            if k == 27:
-                break
-            elif k == ord('s'):
-                cv2.imwrite('opticalfb.png',frame2)
-                cv2.imwrite('opticalhsv.png',bgr)
-            idx = idx + 1
-            prvs = nextImg
+        flow = cv2.calcOpticalFlowFarneback(prvs,nextImg, flow, 0.5, 5, 15, 9, 7, 1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
+
+        mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
+        hsv[...,0] = ang*180/np.pi/2
+        hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+        #hsv[...,2] = 255
+        bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR_FULL)
+        mask = np.zeros_like(frame2)
+        for h in range(0,frame2.shape[1],5):
+            for w in range(0,frame2.shape[0],5):
+                cv2.arrowedLine(mask,(h,w),(h+int(flow[w,h,0]),w+int(flow[w,h,1])),(int(bgr[w,h,0]),int(bgr[w,h,1]),int(bgr[w,h,2])),1)
+        outputImage = cv2.add(frame2,mask)
+        cv2.arrowedLine(outputImage,(int(outputImage.shape[1]/2),int(outputImage.shape[0]/2)),(int(outputImage.shape[1]/2 + max(0,mag.mean()) * np.cos(ang.mean())),int(outputImage.shape[0]/2 + max(0,mag.mean()) * np.sin(ang.mean()))),(0,0,255),1)
+        cv2.namedWindow('Next image', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('OF', cv2.WINDOW_NORMAL)
+        cv2.putText(outputImage,"Frame:" + str(idx),(50,50),1,1,(255,255,255))
+        cv2.imshow('Next image',outputImage)
+        cv2.putText(bgr,"Mean diff:" + str(np.abs((prvs-nextImg).mean())),(50,100),1,1,(255,255,255))
+        cv2.putText(bgr,"Mean movement:" + str(mag.mean()),(50,50),1,1,(255,255,255))
+        cv2.putText(bgr,"Mean orientation:" + str(hsv[...,0].mean()),(50,150),1,1,(255,255,255))
+        cv2.imshow('OF',bgr)
+        videoOutput.write(outputImage)
+        k = cv2.waitKey(1) & 0xff
+        if k == 27:
+            break
+        elif k == ord('s'):
+            cv2.imwrite('opticalfb.png',frame2)
+            cv2.imwrite('opticalhsv.png',bgr)
+        idx = idx + 1
+        prvs = nextImg
     cap.release()
     videoOutput.release()
     cv2.destroyAllWindows()
@@ -185,8 +170,8 @@ def findCorrespondentBlock(x):
     adjY = -(P + min(0,yRange[0]))
     adjX = -(P + min(0,xRange[0]))
 
-    #The range of look to avoid "index out of range" stuff. Note that the range
-    # is 2P +1 unless we are in a border or corner.
+    # The range of search to avoid "index out of range" stuff. Note that the
+    # range is 2P +1 unless we are in a border or corner.
     topY = 1 + 2 * P + min(0,yRange[0]) - max(0,yRange[1] - imHeight)
     topX = 1 + 2 * P + min(0,xRange[0]) - max(0,xRange[1] - imWidth)
     score = 10000.0
@@ -200,7 +185,7 @@ def findCorrespondentBlock(x):
                 dx = x
                 dy = y
 
-    #Coordinates correction with the previous adjustment.
+    # Coordinates correction with the previous adjustment.
     return [dx + adjX ,dy + adjY]
 
 
@@ -261,7 +246,6 @@ def opticalFlowBW(frame1,frame2):
     for el in x:
         OF.append(findCorrespondentBlock(x))
     '''
-    
     OFx = np.reshape(np.asarray([el[0] for el in OF]),(newHeight,newWidth))
     OFy = np.reshape(np.asarray([el[1] for el in OF]),(newHeight,newWidth))
 
