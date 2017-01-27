@@ -9,6 +9,21 @@ import cv2
 import numpy as np
 import sys
 
+def camera_motion(real_x, real_y, curr_img, area_size):
+    x_size = prev_img.shape[0]
+    y_size = prev_img.shape[1]
+
+    new_curr_img = np.zeros([x_size+2*area_size, y_size+2*area_size])
+    new_curr_img[area_size:area_size+x_size, area_size:area_size+y_size]=curr_img
+    
+    comp_img = np.zeros([x_size, y_size])
+
+    for x_pos in range(x_blocks):
+        for y_pos in range(y_blocks):
+            # +y o -y?
+            comp_img[x_pos*block_size:x_pos*block_size+block_size,y_pos*block_size:y_pos*block_size+block_size]=new_curr_img[x_pos*block_size+real_x+area_size:x_pos*block_size+block_size+real_x+area_size,y_pos*block_size-real_y+area_size:y_pos*block_size+block_size-real_y+area_size]
+    return comp_img
+    
 def create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_blocks):
     x_size = prev_img.shape[0]
     y_size = prev_img.shape[1]
@@ -72,16 +87,23 @@ def compute_block_matching(prev_img, curr_img, block_size, area_size, compensati
 if __name__ == "__main__":
     # 1241 x 376 --> 155 x 47
     sequence = 45 #157
-    folder = 'image_0/'
-    prev_img = cv2.imread(folder + '0000'+str(sequence)+'_10.png')
-    curr_img = cv2.imread(folder + '0000'+str(sequence)+'_11.png')
+    #folder = 'image_0/'
+    #prev_img = cv2.imread(folder + '0000'+str(sequence)+'_10.png')
+    #curr_img = cv2.imread(folder + '0000'+str(sequence)+'_11.png')
+    
+    folder = 'traffic/'
+    prev_img = cv2.imread(folder + 'in000950.jpg')
+    curr_img = cv2.imread(folder + 'in000951.jpg')
+    
     
     # We resize from 1241 to 1240 in order to obtain an even number of pixels
     # We choose the color channel 0 because is the same as the others
+    prev_img = cv2.cvtColor(prev_img, cv2.COLOR_BGR2GRAY)
     prev_img = np.array(prev_img)
-    prev_img = prev_img[:,0:1240,0]
+    #prev_img = prev_img[:,0:1240,0]
+    curr_img = cv2.cvtColor(curr_img, cv2.COLOR_BGR2GRAY)
     curr_img = np.array(curr_img)
-    curr_img = curr_img[:,0:1240,0]
+    #curr_img = curr_img[:,0:1240,0]
     
     block_size = 8
     area_size = 16
@@ -90,14 +112,21 @@ if __name__ == "__main__":
     #Apply block matching
     motion_matrix, x_blocks, y_blocks = compute_block_matching(prev_img, curr_img, block_size, area_size, compensation)
     
+    # bincount cannot be negative
+    motion_matrix[:,:,:]=motion_matrix[:,:,:]+area_size
+    x_motion = np.intp(motion_matrix[:,:,0].ravel())
+    y_motion = np.intp(motion_matrix[:,:,1].ravel())
+    real_x = np.argmax(np.bincount(x_motion)) - area_size
+    real_y = np.argmax(np.bincount(y_motion)) - area_size
+
+    stab_img = camera_motion(real_x, real_y, curr_img, area_size)
+    cv2.imwrite('stabilizated.jpg', stab_img)
+    
     if compensation=='backward':
         prev_img = prev_img
     else:
         prev_img = curr_img
 
-    comp_img = create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_blocks)
-    cv2.imwrite('compensated.jpg', comp_img)
+    #comp_img = create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_blocks)
+    #cv2.imwrite('compensated.jpg', comp_img)
     
-    #cv2.line(curr_img, (x[0], y[0]), (x[-1], y[-1]), (0,0,0))
-    #cv2.imshow("foo",img)
-    #cv2.waitKey()
