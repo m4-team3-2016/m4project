@@ -17,12 +17,10 @@ def create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_bl
 
     for x_pos in range(x_blocks):
         for y_pos in range(y_blocks):
-            #comp_img[x_pos*block_size:x_pos*block_size+block_size,y_pos*block_size:y_pos*block_size+block_size]=prev_img[x_pos*block_size+motion_matrix[x_pos,y_pos,0]:x_pos*block_size+block_size+motion_matrix[x_pos,y_pos,0],y_pos*block_size+motion_matrix[x_pos,y_pos,1]:y_pos*block_size+block_size+motion_matrix[x_pos,y_pos,1]]
             comp_img[x_pos*block_size:x_pos*block_size+block_size,y_pos*block_size:y_pos*block_size+block_size]=prev_img[x_pos*block_size-motion_matrix[x_pos,y_pos,0]:x_pos*block_size+block_size-motion_matrix[x_pos,y_pos,0],y_pos*block_size+motion_matrix[x_pos,y_pos,1]:y_pos*block_size+block_size+motion_matrix[x_pos,y_pos,1]]
     return comp_img
 
 def compute_error(block1, block2):
-    print sum(sum(abs(block1-block2)**2))
     return sum(sum(abs(block1-block2)**2))
 
 def block_search(region_to_explore, block_to_search, block_size):
@@ -61,7 +59,7 @@ def compute_block_matching(prev_img, curr_img, block_size, area_size, compensati
     
     for row in range(x_blocks):
         for column in range(y_blocks):
-            print "Computing block" + str(column)
+            print "Computing block " + str(column)
             block_to_search = img2xplore[row*block_size:row*block_size+block_size, column*block_size:column*block_size+block_size]
             region_to_explore = pad_searchimg[row*block_size:row*block_size+block_size+2*area_size, column*block_size:column*block_size+block_size+2*area_size]
             x_mot, y_mot = block_search(region_to_explore, block_to_search, block_size)
@@ -103,4 +101,3 @@ if __name__ == "__main__":
     #cv2.line(curr_img, (x[0], y[0]), (x[-1], y[-1]), (0,0,0))
     #cv2.imshow("foo",img)
     #cv2.waitKey()
-    
