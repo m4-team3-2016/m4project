@@ -220,7 +220,6 @@ def obtainIndexesImage(shape,blockSize= conf.OFblockSize,searchArea= conf.OFsear
 # searchAreas that are processed in parallel. There is commented code that
 # corresponds to the same code, but computed sequentally, just in case it does
 # not work on your Windows machines.
-
 def opticalFlowBW(frame1,frame2):
     width = frame1.shape[1]
     height = frame1.shape[0]
@@ -253,5 +252,4 @@ def opticalFlowBW(frame1,frame2):
 
 
 if __name__ == "__main__":
-    #LukasKanade('../movingTrain.mp4')
-    denseOpticalFlow('../movingTrain.mp4')
+    print 'Optical Flow method'

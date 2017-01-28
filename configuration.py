@@ -12,7 +12,7 @@ isMac = True
 
 isHoleFilling = True
 isMorphology = True
-fourConnectivity = False # If it is set to False, it will be 8 connectivity
+fourConnectivity = True # If it is set to False, it will be 8 connectivity
 isShadowremoval = True
 
 noise_filter_size = 5
@@ -100,3 +100,9 @@ mapping = highwayBinaryMapping1
 ################### OF  ####################
 OFblockSize = 2
 OFsearchArea = 2
+
+
+################# Stab #####################
+block_size = 8
+area_size = 16
+compensation = 'backward'  # or 'forward'
