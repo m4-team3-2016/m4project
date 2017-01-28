@@ -100,3 +100,6 @@ for idx in range(1, nFrames):
 
     # Create prediction image
     # comp_img = create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_blocks)
+
+videoOutputPost.release()
+videoOutputOriginal.release()
