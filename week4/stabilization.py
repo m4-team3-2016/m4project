@@ -6,6 +6,8 @@ import sys
 import os
 import block_matching as match
 import opticalFlowMethods as opticalflow
+import evaluateOpticalFlow as evaluateOF
+
 sys.path.append('../')
 operativeSystem = os.name
 (CVmajor, CVminor, _) = cv2.__version__.split(".")
