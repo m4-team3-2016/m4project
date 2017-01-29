@@ -1,10 +1,13 @@
 import cv2
 import configuration as conf
-import numpy as np
+import numpy as np, cv
 import glob
 import sys
 import os
 import block_matching as match
+import Image
+import scipy.misc
+
 import opticalFlowMethods as opticalflow
 import evaluateOpticalFlow as evaluateOF
 
@@ -12,7 +15,7 @@ sys.path.append('../')
 operativeSystem = os.name
 (CVmajor, CVminor, _) = cv2.__version__.split(".")
 
-resultsPath = "./resultsStabilization/"
+resultsPath = "./resultsStabilizationOwnVideo/"
 if not os.path.exists(resultsPath):
     os.makedirs(resultsPath)
 
@@ -21,14 +24,14 @@ if not os.path.exists("./videos/"):
 
 ################### task 2 ######################
 # Task 2.1: Video Stabilization with Block Matching
-ID = "Traffic"
+ID = "ownVideo"
 folder = conf.folders[ID]
 block_size = conf.block_size
 area_size = conf.area_size
 compensation = conf.compensation
 
 folder = conf.folders[ID]
-framesFiles = sorted(glob.glob(folder + '*'))
+framesFiles = sorted(glob.glob(folder + '*.jpg'))
 nFrames = len(framesFiles)
 
 referenceImageName = framesFiles[0]
@@ -87,29 +90,34 @@ for idx in range(1, nFrames):
 
     out = match.camera_motion(real_x, real_y, currentImage)
     # OS dependant writing
+    resultPath = ''
     if operativeSystem == 'posix':
         # posix systems go here: ubuntu, debian, linux mint, red hat, etc, even osX (iew)
         if conf.isMac:
-            cv2.imwrite(resultsPath + file_name.split('/')[-1][0:-4] + '.png',out)
+            resultPath = resultsPath + file_name.split('/')[-1][0:-4] + '.png'
         else:
-            cv2.imwrite(resultsPath + file_name.split('/')[-1] + '.png', out)
+            resultPath = resultsPath + file_name.split('/')[-1] + '.png'
     else:
-        # say hello to propietary software
-        cv2.imwrite(resultsPath + file_name.split('\\')[-1].split('.')[0] + '.png', out)
+        resultPath = resultsPath + file_name.split('\\')[-1].split('.')[0] + '.png'
+
+    cv2.imwrite(resultPath, out)
 
     if size[0] != out.shape[1] and size[1] != out.shape[0]:
         img = cv2.resize(out, size)
     else:
         img = out
+
     videoOutputPost.write(img)
     if size[0] != currentImage.shape[1] and size[1] != currentImage.shape[0]:
         img = cv2.resize(currentImage, size)
     else:
         img = currentImage
+
     videoOutputOriginal.write(currentImage)
 
     if not conf.isReferenceImageFixed:
-        referenceImageBW = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
+        referenceImage = cv2.imread(resultPath)
+        referenceImageBW = cv2.cvtColor(referenceImage, cv2.COLOR_BGR2GRAY)
 
     # Create prediction image
     # comp_img = create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_blocks)
