@@ -53,8 +53,10 @@ else:
     # openCV 2
     fourcc = cv2.cv.CV_FOURCC(*'MJPG')
 
-videoOutputOriginal = cv2.VideoWriter("videos/originalVideo.avi", fourcc, 20.0,(referenceImage.shape[1], referenceImage.shape[0]))
-videoOutputPost = cv2.VideoWriter("videos/stabilizedVideo.avi", fourcc, 20.0,(referenceImage.shape[1], referenceImage.shape[0]))
+size = referenceImage.shape[1], referenceImage.shape[0]
+
+videoOutputOriginal = cv2.VideoWriter("videos/originalVideo.avi", fourcc, 20.0,size, True)
+videoOutputPost = cv2.VideoWriter("videos/stabilizedVideo.avi", fourcc, 20.0,size, True)
 videoOutputPost.write(referenceImage)
 videoOutputOriginal.write(referenceImage)
 
@@ -95,8 +97,19 @@ for idx in range(1, nFrames):
         # say hello to propietary software
         cv2.imwrite(resultsPath + file_name.split('\\')[-1].split('.')[0] + '.png', out)
 
-    videoOutputPost.write(out)
+    if size[0] != out.shape[1] and size[1] != out.shape[0]:
+        img = cv2.resize(out, size)
+    else:
+        img = out
+    videoOutputPost.write(img)
+    if size[0] != currentImage.shape[1] and size[1] != currentImage.shape[0]:
+        img = cv2.resize(currentImage, size)
+    else:
+        img = currentImage
     videoOutputOriginal.write(currentImage)
+
+    if not conf.isReferenceImageFixed:
+        referenceImageBW = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
 
     # Create prediction image
     # comp_img = create_compensated_image(prev_img, motion_matrix, block_size, x_blocks, y_blocks)
