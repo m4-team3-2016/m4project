@@ -55,6 +55,9 @@ folders["FallGT"]  = "../../../datasetDeliver_2/fall/groundtruth/"
 folders["Traffic"]  = "../../../datasetDeliver_2/traffic/input/"
 folders["TrafficGT"]  = "../../../datasetDeliver_2/traffic/groundtruth/"
 
+folders["ownVideo"]  = "./videos/ownVideo/"
+
+
 # Evaluation
 
 # Results logging
@@ -106,3 +109,4 @@ OFsearchArea = 2
 block_size = 8
 area_size = 16
 compensation = 'backward'  # or 'forward'
+isReferenceImageFixed = False

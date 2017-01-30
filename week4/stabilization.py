@@ -1,6 +1,6 @@
 import cv2
 import configuration as conf
-import numpy as np, cv
+import numpy as np
 import glob
 import sys
 import os
@@ -15,7 +15,7 @@ sys.path.append('../')
 operativeSystem = os.name
 (CVmajor, CVminor, _) = cv2.__version__.split(".")
 
-resultsPath = "./resultsStabilizationOwnVideo/"
+resultsPath = "./resultsStabilizationOwnVideo2/"
 if not os.path.exists(resultsPath):
     os.makedirs(resultsPath)
 

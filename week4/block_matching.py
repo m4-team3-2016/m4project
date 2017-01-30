@@ -26,9 +26,12 @@ def camera_motion(real_x, real_y, curr_img):
         comp_img = np.zeros([x_size, y_size])
     elif curr_img.shape.__len__() == 3:
         new_curr_img = np.zeros([x_size + 2 * area_size, y_size + 2 * area_size, 3])
-        new_curr_img[area_size:area_size + x_size, area_size:area_size + y_size, 0] = curr_img[:, :, 0]
-        new_curr_img[area_size:area_size + x_size, area_size:area_size + y_size, 1] = curr_img[:, :, 1]
-        new_curr_img[area_size:area_size + x_size, area_size:area_size + y_size, 2] = curr_img[:, :, 2]
+        auxImg = np.pad(curr_img[:, :, 0], ((area_size, area_size), (area_size, area_size)), 'symmetric')
+        new_curr_img[:,:,0] = auxImg
+        auxImg = np.pad(curr_img[:, :, 1], ((area_size, area_size), (area_size, area_size)), 'symmetric')
+        new_curr_img[:, :, 1] = auxImg
+        auxImg = np.pad(curr_img[:, :, 2], ((area_size, area_size), (area_size, area_size)), 'symmetric')
+        new_curr_img[:, :, 2] = auxImg
         comp_img = np.zeros([x_size, y_size, 3])
     else:
         print 'ERROR dimension'
