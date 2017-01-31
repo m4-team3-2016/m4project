@@ -15,7 +15,7 @@ sys.path.append('../')
 operativeSystem = os.name
 (CVmajor, CVminor, _) = cv2.__version__.split(".")
 
-resultsPath = "./resultsStabilizationOwnVideo2/"
+resultsPath = "./resultsStabilizationTrafficVideo/"
 if not os.path.exists(resultsPath):
     os.makedirs(resultsPath)
 
@@ -24,7 +24,7 @@ if not os.path.exists("./videos/"):
 
 ################### task 2 ######################
 # Task 2.1: Video Stabilization with Block Matching
-ID = "ownVideo"
+ID = "Traffic"
 folder = conf.folders[ID]
 block_size = conf.block_size
 area_size = conf.area_size
@@ -63,6 +63,9 @@ videoOutputPost = cv2.VideoWriter("videos/stabilizedVideo.avi", fourcc, 20.0,siz
 videoOutputPost.write(referenceImage)
 videoOutputOriginal.write(referenceImage)
 
+prev_x = 0
+prev_y = 0
+
 for idx in range(1, nFrames):
     file_name = framesFiles[idx]
     if operativeSystem == 'posix':
@@ -83,12 +86,31 @@ for idx in range(1, nFrames):
 
     # bincount cannot be negative
     motion_matrix[:, :, :] = motion_matrix[:, :, :] + area_size
-    x_motion = np.intp(motion_matrix[:, :, 0].ravel())
-    y_motion = np.intp(motion_matrix[:, :, 1].ravel())
-    real_x = np.argmax(np.bincount(x_motion)) - area_size
-    real_y = np.argmax(np.bincount(y_motion)) - area_size
+    #x_motion = np.intp(motion_matrix[:, :, 0].ravel())
+    #y_motion = np.intp(motion_matrix[:, :, 1].ravel())
+    votation_matrix=np.zeros([2*area_size+1,2*area_size+1])
+    for xx in range(motion_matrix.shape[0]):
+        for yy in range(motion_matrix.shape[1]):
+            votation_matrix[motion_matrix[xx,yy,0],motion_matrix[xx,yy,1]]=votation_matrix[motion_matrix[xx,yy,0],motion_matrix[xx,yy,1]]+1
+
+    maximum = 0
+    real_x = 0
+    real_y = 0
+    for xx in range(votation_matrix.shape[0]):
+        for yy in range(votation_matrix.shape[1]):
+            if votation_matrix[xx,yy]>maximum:
+                maximum = votation_matrix[xx,yy]
+                real_x = xx
+                real_y = yy
+
+    real_x = real_x - area_size
+    real_y = real_y - area_size
 
     out = match.camera_motion(real_x, real_y, currentImage)
+    referenceImageBW = currentImageBW
+    prev_x = prev_x + real_x
+    prev_y = prev_y + real_y
+
     # OS dependant writing
     resultPath = ''
     if operativeSystem == 'posix':

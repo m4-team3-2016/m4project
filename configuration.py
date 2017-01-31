@@ -55,7 +55,14 @@ folders["FallGT"]  = "../../../datasetDeliver_2/fall/groundtruth/"
 folders["Traffic"]  = "../../../datasetDeliver_2/traffic/input/"
 folders["TrafficGT"]  = "../../../datasetDeliver_2/traffic/groundtruth/"
 
-folders["ownVideo"]  = "./videos/ownVideo/"
+folders["ownVideo"]  = "./videos/ownVideo3/"
+
+folders["45"]  = "../../../datasetDeliver_2/kitty/45/"
+folders["45GT"]  = "../../../datasetDeliver_2/kitty/45/gt/000045_10.png"
+
+folders["157"]  = "../../../datasetDeliver_2/kitty/157/"
+folders["157GT"]  = "../../../datasetDeliver_2/kitty/157/gt/000157_10.png"
+
 
 
 # Evaluation
@@ -106,7 +113,7 @@ OFsearchArea = 2
 
 
 ################# Stab #####################
-block_size = 8
+block_size = 16
 area_size = 16
 compensation = 'backward'  # or 'forward'
 isReferenceImageFixed = False
