@@ -57,10 +57,10 @@ folder = conf.folders[ID]
 framesFiles = sorted(glob.glob(folder + '*.png'))
 nFrames = len(framesFiles)
 
-referenceImage = cv2.imread(framesFiles[0], -1)
+referenceImage = cv2.imread(framesFiles[0])
 referenceImageBW = cv2.cvtColor(referenceImage, cv2.COLOR_BGR2GRAY)
 
-currentImage = cv2.imread(framesFiles[1], -1)
+currentImage = cv2.imread(framesFiles[1])
 currentImageBW = cv2.cvtColor(currentImage, cv2.COLOR_BGR2GRAY)
 
 # Reshape from 1241 to 1240
