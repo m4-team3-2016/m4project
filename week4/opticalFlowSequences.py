@@ -31,13 +31,8 @@ def expand_motion_matrix(motion_matrix, block_size=8):
             pixel_motion_matrix[xx*block_size:xx*block_size+block_size,yy*block_size:yy*block_size+block_size,1] = motion_matrix[xx,yy,1] #y motion
     
     return pixel_motion_matrix
-'''
-OFimage_exp = expand_motion_matrix(OFimage, conf.block_size, conf.area_size)
-print(OFimage_exp.shape)    
-print(OFimage.shape)    
-print(OFgt.shape)
-''' 
-    
+
+
 sys.path.append('../')
 operativeSystem = os.name
 (CVmajor, CVminor, _) = cv2.__version__.split(".")
@@ -74,19 +69,18 @@ OFimage = match.compute_block_matching(referenceImageBW, currentImageBW)
 # OFimage = opticalflow.LukasKanade(referenceImage, currentImage)
 
 OFimage_exp = expand_motion_matrix(OFimage, conf.block_size)
+OFimage_exp = OFimage_exp.astype('float32')
 
 GTpath = ID+'GT'
-OFgt = cv2.imread(conf.folders[GTpath], -1)
 
-# Reshape from 1241 to 1240
-OFgt = OFgt[:,1:,:]
+# Read the ground truth again, now in mode 1 in order to obtain values between [0,255]
+OFgt = cv2.imread(conf.folders[GTpath])
 
+# Reduce the dimensionality from 1241 to 1240 and remove the first depth component
+OFgt = np.array(OFgt[:,1:,1:], dtype='float32')
 
-print('---Showing OFimage and OFgt shapes...')
-print(OFimage_exp.shape)
-print(OFgt.shape)
-
-msenValues, error, image = of.msen(OFimage_exp, OFgt)
+# Compute MSEN
+msenValues, error, image = of.msen_no0GTComponent(OFimage_exp, OFgt)
 plt.hist(msenValues, bins=25, normed=True)
 formatter = FuncFormatter(of.to_percent)
 plt.gca().yaxis.set_major_formatter(formatter)
@@ -94,3 +88,4 @@ plt.xlabel('MSEN value')
 plt.ylabel('Number of Pixels')
 plt.title("%s Histogram. \n Percentage of Erroneous Pixels in Non-occluded areas (PEPN): %d %%" % (ID, error))
 plt.show()
+# cv2.waitKey(10)
