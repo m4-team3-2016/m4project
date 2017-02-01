@@ -108,8 +108,8 @@ mapping = highwayBinaryMapping1
 
 
 ################### OF  ####################
-OFblockSize = 2
-OFsearchArea = 2
+OFblockSize = 16
+OFsearchArea = 16
 
 
 ################# Stab #####################

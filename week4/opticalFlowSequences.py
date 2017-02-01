@@ -24,12 +24,12 @@ import evaluateOpticalFlow as evaluateOF
 def expand_motion_matrix(motion_matrix, block_size=8):
 
     pixel_motion_matrix=np.zeros([motion_matrix.shape[0]*block_size,motion_matrix.shape[1]*block_size,2])
-    
+
     for xx in range(motion_matrix.shape[0]):
         for yy in range(motion_matrix.shape[1]):
             pixel_motion_matrix[xx*block_size:xx*block_size+block_size,yy*block_size:yy*block_size+block_size,0] = motion_matrix[xx,yy,0] #x motion
             pixel_motion_matrix[xx*block_size:xx*block_size+block_size,yy*block_size:yy*block_size+block_size,1] = motion_matrix[xx,yy,1] #y motion
-    
+
     return pixel_motion_matrix
 
 
@@ -87,5 +87,6 @@ plt.gca().yaxis.set_major_formatter(formatter)
 plt.xlabel('MSEN value')
 plt.ylabel('Number of Pixels')
 plt.title("Histogram of scene %s. \n Percentage of Erroneous Pixels in Non-occluded areas (PEPN): %d %%" % (ID, error))
+plt.savefig("ID157.png")
 plt.show()
 # cv2.waitKey(10)

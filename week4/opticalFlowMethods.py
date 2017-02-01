@@ -1,13 +1,13 @@
 
 import numpy as np
 import cv2
-import configuration as conf
 from matplotlib import pyplot as plt
 import imutils
 from multiprocessing import Pool
 import multiprocessing
 import sys
 sys.path.append('../')
+import configuration as conf
 
 
 def readImagesFromVideo(videoFile,frameID1,frameID2):
@@ -127,7 +127,7 @@ def FarnebackVideo(videoFile):
 
 def FarnebackOF(frame1,frame2):
     #All these parameters should be at a configuration file.
-    flow = cv2.calcOpticalFlowFarneback(prvs,nextImg, flow, 0.5, 5, 15, 9, 7, \
+    flow = cv2.calcOpticalFlowFarneback(frame1,frame2, None, 0.5, 5, 15, 9, 7, \
             1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
     return flow
 
