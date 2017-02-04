@@ -28,6 +28,20 @@ class detection:
         self.checkWidthHeight(topLeft,bottomRight)
         # The white pixels position
         self.indexes = [indexes]
+        self.topLeft = topLeft
+        self.bottomRight = bottomRight
 
+        self.centroid = [sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1])]
 
-    def isInLine(self,line)
+    def isInLine(self,line):
+        distanceToLine = np.abs(self.indexes[0] * line[0] + self.indexes[1] * line[1] + line[2])
+        if min(distance) < 2:
+            return True
+        else:
+            return False
+
+    def isCentroidInLine(self,line):
+        if np.abs(self.centroid[0] * line[0] + self.centroid[1] * line[1] + line[2]) < 2:
+            return True
+        else:
+            return False
