@@ -46,89 +46,86 @@ def drawAllBoundingBoxes(img_color, indexes, infractionIDList):
         oimg = dbb.drawBBoxWithText(img_color,'ID: ' + str(int(bb_idx+1)),topLeft,bottomRight,color,alpha)
     
     return oimg
-    
-                      
-if __name__ == "__main__":
-    
-    import cv2
-
-    currentFrame = 44
-
-    # Load the mask
-    folderGT = conf.folders["HighwayGT"]
-    framesFiles = sorted(glob.glob(folderGT + '*'))
-    nFrames = len(framesFiles)
-    img_mask = cv2.imread(framesFiles[currentFrame])
 
 
-    # Load the color image
-    # folder = conf.folders["Traffic"]
-    # framesFiles = sorted(glob.glob(folder + '*'))
-    # nFrames = len(framesFiles)
-    # img_color = cv2.imread(framesFiles[startFrame])
-    #
-    # Draw all bounding boxes
-    # Cars 1 and 5 are infringing the law!
-    # infractionIDList = [2, 5]
-    # oimg = drawAllBoundingBoxes(img_color, indexes, infractionIDList)
-    #
-    # Save the output image
-    # cv2.imwrite('oimg.png',oimg)
+def drawCurrentBoundingBox(img_color, index, topLeft, bottomRight, isInfracting=False):
+    alpha = 0.2
+    if isInfracting:
+        color = (0,0,255)
+    else:
+        color = (0,255,0)
+    oimg = dbb.drawBBoxWithText(img_color,'ID: ' + str(int(index)),topLeft,bottomRight,color,alpha)
+    return oimg
 
-    # Parameters
-    isFirstFrame = True
-    id = 1
-    detectedObjects = []
-    currentFrame
 
-    # Reset onScreenValues to detect which objects are in the current image
-    for element in detectedObjects:
-        element.setVisibleOnScreen(False)
+def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, imgMask1, img2, imgMask2):
 
     # Find elements in list, if there are no elements, we should create them.
     # Creating objects is only necessary for the first frame.
     if isFirstFrame:
         # Compute the connected components
-        cc = getConnectedComponents(img_mask)
+        cc = getConnectedComponents(imgMask1)
         # Get the pixel coordinates of the first connected component
-        indexes = getLabelCoordinates(img_mask, cc, 1)
+        indexes = getLabelCoordinates(imgMask1, cc, 1)
         for idx in range(1,cc.max()+1):
-            indexes = getLabelCoordinates(img_mask, cc, idx)
+            indexes = getLabelCoordinates(imgMask1, cc, idx)
             topLeft = (min(indexes[1]), min(indexes[0]))
             bottomRight = (max(indexes[1]), max(indexes[0]))
-            detectedObject = dO.detection(idx, currentFrame, topLeft, bottomRight, indexes)
+            detectedObject = dO.detection(idx, frameID, topLeft, bottomRight, indexes)
             detectedObjects.append(detectedObject)
+            # Print Bounding boxes in image. Based on the indexObjectNumber detected or created
+            isInfracting = False
+            img1 = drawCurrentBoundingBox(img1, idx, topLeft, bottomRight, isInfracting)
 
+    # Reset onScreenValues to detect which objects are in the current image
+    for element in detectedObjects:
+        element.setVisibleOnScreen(False)
 
-    secondFrame = currentFrame+1
+    cv2.imshow("img1", img1)
+    cv2.waitKey(0)
 
-    # Load the mask
-    img_mask = cv2.imread(framesFiles[secondFrame])
-
+    secondFrame = frameID+1
     # Compute the connected components
-    cc = getConnectedComponents(img_mask)
+    cc = getConnectedComponents(imgMask2)
 
     for idx in range(1,cc.max()+1):
         # Get the pixel coordinates of the first connected component
-        indexes = getLabelCoordinates(img_mask, cc, idx)
+        indexes = getLabelCoordinates(imgMask2, cc, idx)
         isFound = False
         topLeft = (min(indexes[1]), min(indexes[0]))
         bottomRight = (max(indexes[1]), max(indexes[0]))
         centroid = [sum(indexes[0]) / len(indexes[0]), sum(indexes[1]) / len(indexes[1])]
 
         indexObjectNumber = 0
+
+        # Kalman Filter
         for element in detectedObjects:
+            if element.getVisibleOnScreen():
+                continue;
+
             prediction = element.kalmanFilter.predictKalmanFilter()
             distance = element.computeDistance(centroid, prediction)
+            print "Distance between centroids:       " + str(distance)
             if(distance < 10):
                 element.kalmanFilter.updateMeasurement(centroid)
                 prediction = element.kalmanFilter.predictKalmanFilter()
                 indexObjectNumber = element.detectionID
                 element.setVisibleOnScreen(True)
                 isFound = True
-                print "Kalman prediction: " + str(prediction[0]) + " - " + str(prediction[1])
-                print "Real values:       " + str(centroid[0]) + " - " + str(centroid[1])
+                # print "Kalman prediction: " + str(prediction[0]) + " - " + str(prediction[1])
+                # print "Real values:       " + str(centroid[0]) + " - " + str(centroid[1])
                 break;
+
+        # Coherence Between Centroids
+        # for element in detectedObjects:
+        #     if element.getVisibleOnScreen():
+        #         continue;
+        #     previousCentroid = element.centroid
+        #     if element.isVectorValid(element.getVector(previousCentroid, centroid)):
+        #         indexObjectNumber = element.detectionID
+        #         element.setVisibleOnScreen(True)
+        #         isFound = True
+        #         break;
 
         if not isFound:
             indexObjectNumber = detectedObjects[detectedObjects.__len__()-1].detectionID + 1
@@ -136,16 +133,45 @@ if __name__ == "__main__":
             detectedObjects.append(detectedObject)
 
         #Print Bounding boxes in image. Based on the indexObjectNumber detected or created
-        indexObjectNumber
+        isInfracting = False
+        img2 = drawCurrentBoundingBox(img2, indexObjectNumber, topLeft, bottomRight, isInfracting)
 
-
-    # CHECK THAT !!!!!!!!!!!!!!!!!!!!!!!!!!
+    cv2.imshow("img2", img2)
+    cv2.waitKey(0)
 
     # Find detectedObjects that are not showing in image since 10 frames ago.
     # And remove them
     for element in detectedObjects:
-        if not element.getVisibleOnScreen() and currentFrame > (element.getCurrentFrame+10):
+        if not element.getVisibleOnScreen() and frameID > (element.getCurrentFrame+10):
             detectedObjects.remove(element)
 
+    return detectedObjects, img1, img2
 
-    # return detectedObjects, img1, img2
+
+if __name__ == "__main__":
+    
+    import cv2
+
+    frameID = 44
+    secondFrame = frameID+1
+
+    # Load the mask
+    folderGT = conf.folders["HighwayGT"]
+    folder = conf.folders["Highway"]
+    framesFilesGT = sorted(glob.glob(folderGT + '*'))
+    framesFiles   = sorted(glob.glob(folder + '*'))
+    nFrames = len(framesFilesGT)
+    img1 = cv2.imread(framesFiles[frameID])
+    img2 = cv2.imread(framesFiles[frameID+1])
+    imgMask1 = cv2.imread(framesFilesGT[frameID])
+    imgMask2 = cv2.imread(framesFilesGT[frameID+1])
+
+    # Load the mask
+    detectedObjects = []
+    # cv2.imwrite('testingBefore.png', img2)
+    detectedObjects, img1, img2 = computeTrackingBetweenFrames(True, detectedObjects, frameID, img1, imgMask1, img2, imgMask2)
+
+    # cv2.imwrite('testing.png', img2)
+    #
+    # cv2.imshow("OutputColor", img2)
+    # cv2.waitKey(0)

@@ -4,6 +4,7 @@ sys.path.append('../')
 import configuration as conf
 import KalmanFilterClass as kf
 import cv2
+import math
 
 class detection:
 
@@ -82,3 +83,36 @@ class detection:
     def computeDistance(self, point1, point2):
         distance = pow((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2,0.5)
         return distance
+
+    def getVector(self, a, b):
+        """Calculate vector (distance, angle in degrees) from point a to point b.
+        Angle ranges from -180 to 180 degrees.
+        Vector with angle 0 points straight down on the image.
+        Values increase in clockwise direction.
+        """
+        dx = float(b[0] - a[0])
+        dy = float(b[1] - a[1])
+        distance = math.sqrt(dx ** 2 + dy ** 2)
+
+        if dy > 0:
+            angle = math.degrees(math.atan(-dx / dy))
+        elif dy == 0:
+            if dx < 0:
+                angle = 90.0
+            elif dx > 0:
+                angle = -90.0
+            else:
+                angle = 0.0
+        else:
+            if dx < 0:
+                angle = 180 - math.degrees(math.atan(dx / dy))
+            elif dx > 0:
+                angle = -180 - math.degrees(math.atan(dx / dy))
+            else:
+                angle = 180.0
+        return distance, angle
+
+    def isVectorValid(a):
+        distance, angle = a
+        threshold_distance = max(10.0, -0.008 * angle ** 2 + 0.4 * angle + 25.0)
+        return (distance <= threshold_distance)
