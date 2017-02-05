@@ -26,35 +26,27 @@ def getConnectedComponents(img_mask):
     return connected_components_img
     
     
-def getLabelCoordinates(img, connected_components_img, idx):
+def getLabelCoordinates(connected_components_img, idx):
     # Find where labels in connected_components_img are equal to idx
     return np.where(connected_components_img == idx)
     
-    
-def drawAllBoundingBoxes(img_color, indexes, infractionIDList):
-    # Draw all bounding boxes in scene
-    topLeft = (min(indexes[1]),min(indexes[0]))
-    bottomRight = (max(indexes[1]),max(indexes[0]))
-    alpha = 0.5
-    oimg = np.zeros(img_color.shape)
-    
-    for bb_idx in range(cc.max()):
-        if bb_idx+1 in infractionIDList:
-            color = (0,0,255)
-        else:
-            color = (0,255,0)
-        oimg = dbb.drawBBoxWithText(img_color,'ID: ' + str(int(bb_idx+1)),topLeft,bottomRight,color,alpha)
-    
-    return oimg
-
 
 def drawCurrentBoundingBox(img_color, index, topLeft, bottomRight, isInfracting=False):
-    alpha = 0.2
+    alpha = 0.5
     if isInfracting:
-        color = (0,0,255)
+        color = (0, 0, 255)
     else:
-        color = (0,255,0)
-    oimg = dbb.drawBBoxWithText(img_color,'ID: ' + str(int(index)),topLeft,bottomRight,color,alpha)
+        color = (0, 255, 0)
+    # Get the bbox image
+    cv2.imwrite("testBefore.png", img_color)
+    bb_mask = dbb.drawBBoxWithText(img_color, 'ID: ' + str(int(index)), topLeft, bottomRight, color, alpha)
+    # Find pixels where the object is
+    coords = np.where(bb_mask <> 0)
+    # Replace non-zero pixels in the current image by the bb_mask pixel intensities
+    oimg = img_color.copy()
+    oimg[coords] = 0
+    oimg = oimg + bb_mask
+    cv2.imwrite("after.png", oimg)
     return oimg
 
 
@@ -66,9 +58,9 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
         # Compute the connected components
         cc = getConnectedComponents(imgMask1)
         # Get the pixel coordinates of the first connected component
-        indexes = getLabelCoordinates(imgMask1, cc, 1)
+        indexes = getLabelCoordinates(cc, 1)
         for idx in range(1,cc.max()+1):
-            indexes = getLabelCoordinates(imgMask1, cc, idx)
+            indexes = getLabelCoordinates(cc, idx)
             topLeft = (min(indexes[1]), min(indexes[0]))
             bottomRight = (max(indexes[1]), max(indexes[0]))
             detectedObject = dO.detection(idx, frameID, topLeft, bottomRight, indexes)
@@ -81,16 +73,13 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
     for element in detectedObjects:
         element.setVisibleOnScreen(False)
 
-    cv2.imshow("img1", img1)
-    cv2.waitKey(0)
-
     secondFrame = frameID+1
     # Compute the connected components
     cc = getConnectedComponents(imgMask2)
 
     for idx in range(1,cc.max()+1):
         # Get the pixel coordinates of the first connected component
-        indexes = getLabelCoordinates(imgMask2, cc, idx)
+        indexes = getLabelCoordinates(cc, idx)
         isFound = False
         topLeft = (min(indexes[1]), min(indexes[0]))
         bottomRight = (max(indexes[1]), max(indexes[0]))
@@ -105,7 +94,7 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
 
             prediction = element.kalmanFilter.predictKalmanFilter()
             distance = element.computeDistance(centroid, prediction)
-            print "Distance between centroids:       " + str(distance)
+            # print "Distance between centroids:       " + str(distance)
             if(distance < 10):
                 element.kalmanFilter.updateMeasurement(centroid)
                 prediction = element.kalmanFilter.predictKalmanFilter()
@@ -135,9 +124,6 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
         #Print Bounding boxes in image. Based on the indexObjectNumber detected or created
         isInfracting = False
         img2 = drawCurrentBoundingBox(img2, indexObjectNumber, topLeft, bottomRight, isInfracting)
-
-    cv2.imshow("img2", img2)
-    cv2.waitKey(0)
 
     # Find detectedObjects that are not showing in image since 10 frames ago.
     # And remove them
@@ -171,7 +157,7 @@ if __name__ == "__main__":
     # cv2.imwrite('testingBefore.png', img2)
     detectedObjects, img1, img2 = computeTrackingBetweenFrames(True, detectedObjects, frameID, img1, imgMask1, img2, imgMask2)
 
-    # cv2.imwrite('testing.png', img2)
-    #
-    # cv2.imshow("OutputColor", img2)
-    # cv2.waitKey(0)
+    cv2.imshow("img1", img1)
+    cv2.waitKey(0)
+    cv2.imshow("img2", img2)
+    cv2.waitKey(0)
