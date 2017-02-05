@@ -2,11 +2,11 @@ import cv2
 import sys
 import numpy as np
 
-sys.path.append('../')
+sys.path.append("../")
 sys.path.append('../tools')
 
 for i in range(1,5):
-    sys.path.append('../week' + str(i))
+    sys.path.append("../week" + str(i))
 
 import configuration as conf
 import week5configuration as finalConf

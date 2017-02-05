@@ -2,6 +2,8 @@ import numpy as np
 import sys
 sys.path.append('../')
 import configuration as conf
+import KalmanFilterClass as kf
+
 
 class detection:
 
@@ -53,6 +55,8 @@ class detection:
 
         return comet
 
+
+        self.kalmanFilter =  kf.KalmanFilterClass(id,startFrame,self.centroid)
 
     def isInLine(self,line):
         distanceToLine = np.abs(self.indexes[0] * line[0] + self.indexes[1] * line[1] + line[2])
