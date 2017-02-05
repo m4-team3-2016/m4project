@@ -11,7 +11,7 @@ def drawBBoxWithText(image,text,topLeft,bottomRight,color,alpha):
     cv2.rectangle(frame,topLeft,bottomRight,color)
     cv2.rectangle(frame,(topLeft[0],bottomRight[1]),(topLeft[0] + textDisplacementX + textSize[0][0] ,bottomRight[1] + 15),color,-1)
 
-    cv2.addWeighted(frame, alpha, image, 1 - alpha, 0, image)
+    #cv2.addWeighted(frame, alpha, image, 1 - alpha, 0, image)
 
     cv2.putText(frame,text,(topLeft[0]+5,bottomRight[1]+textDisplacementX),font,fontScale,(255,255,255))
     return frame
