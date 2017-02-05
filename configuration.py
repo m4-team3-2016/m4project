@@ -2,11 +2,16 @@
 import cv2
 
 
+ID = "Own"
+
 colorSpaceConversion = {}
 OptimalColorSpaces = {}
 OptimalAlphaParameter = {}
 OptimalRhoParameter = {}
 folders = {}
+linesThickness = {}
+pointLine1 = {}
+pointLine2 = {}
 
 isMac = True
 
@@ -36,7 +41,6 @@ OptimalRhoParameter["Fall"]      = 0.03
 OptimalRhoParameter["Traffic"]   = 0.03
 
 
-
 # YCrCb (99 out of 100 you will be doing it in YCrCb when doing video)
 colorSpaceConversion['YCrCb'] = cv2.COLOR_BGR2YCR_CB
 colorSpaceConversion['HSV']   = cv2.COLOR_BGR2HSV
@@ -63,7 +67,19 @@ folders["45GT"]  = "../../../datasetDeliver_2/kitty/45/gt/000045_10.png"
 folders["157"]  = "../../../datasetDeliver_2/kitty/157/"
 folders["157GT"]  = "../../../datasetDeliver_2/kitty/157/gt/000157_10.png"
 
+# Draw lines
+linesThickness["Traffic"] = 1
+linesThickness["Highway"] = 1
+linesThickness["Own"] = 1
 
+pointLine1["Traffic"] = [[78,194],[295,68]]
+pointLine2["Traffic"] = [[14,99],[172,8]]
+
+pointLine1["Highway"] = [[74,144],[268,144]]
+pointLine2["Highway"] = [[113,99],[265,101]]
+
+pointLine1["Own"] = [[57,192],[522,194]]
+pointLine2["Own"] = [[151,54],[422,55]]
 
 # Evaluation
 
