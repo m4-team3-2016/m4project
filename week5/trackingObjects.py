@@ -20,7 +20,8 @@ import cv2.cv as cv
 
 def getConnectedComponents(img_mask):
     # Binarize the image
-    img_mask = np.where(img_mask > 1, 1, 0)
+    if img_mask.max() > 1:
+        img_mask = np.where(img_mask > 1, 1, 0)
     # Detect connected components and assign an ID to each one
     connected_components_img = morphology.label(img_mask, background=0) 
     return connected_components_img

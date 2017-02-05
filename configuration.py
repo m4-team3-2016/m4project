@@ -16,6 +16,7 @@ pointLine2 = {}
 isMac = True
 
 isHoleFilling = True
+isAreFilling = True
 isMorphology = True
 fourConnectivity = True # If it is set to False, it will be 8 connectivity
 isShadowremoval = False
@@ -23,6 +24,7 @@ isShadowremoval = False
 noise_filter_size = 5
 vert_filter_size = 20
 horz_filter_size = 20
+areaOptimal = 80
 
 # Best perfomance depending on the dataset that is trained
 OptimalColorSpaces["Highway"]   = 'LUV'
