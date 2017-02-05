@@ -52,20 +52,15 @@ if __name__ == "__main__":
     
     import cv2
 
-    startFrame = 44
+    currentFrame = 44
 
     # Load the mask
     folderGT = conf.folders["HighwayGT"]
     framesFiles = sorted(glob.glob(folderGT + '*'))
     nFrames = len(framesFiles)
-    img_mask = cv2.imread(framesFiles[startFrame])
-    
-    # Compute the connected components
-    cc = getConnectedComponents(img_mask)
-    
-    # Get the pixel coordinates of the first connected component
-    indexes = getLabelCoordinates(img_mask, cc, 1)
-    
+    img_mask = cv2.imread(framesFiles[currentFrame])
+
+
     # Load the color image
     # folder = conf.folders["Traffic"]
     # framesFiles = sorted(glob.glob(folder + '*'))
@@ -80,39 +75,32 @@ if __name__ == "__main__":
     # Save the output image
     # cv2.imwrite('oimg.png',oimg)
 
+    # Parameters
+    isFirstFrame = True
     id = 1
     detectedObjects = []
-    for idx in range(1,cc.max()+1):
-        indexes = getLabelCoordinates(img_mask, cc, idx)
-        topLeft = (min(indexes[1]), min(indexes[0]))
-        bottomRight = (max(indexes[1]), max(indexes[0]))
-        detectedObject = dO.detection(idx, startFrame, topLeft, bottomRight, indexes)
-        detectedObjects.append(detectedObject)
+    currentFrame
 
-########
-    centroid = [sum(indexes[0]) / len(indexes[0]), sum(indexes[1]) / len(indexes[1])]
-    kalman = cv.CreateKalman(4, 2, 0)
-    # This happens only one time to initialize the kalman Filter with the first (x,y) point
-    kalman.state_pre[0, 0] = centroid[0]
-    kalman.state_pre[1, 0] = centroid[1]
-    kalman.state_pre[2, 0] = 0
-    kalman.state_pre[3, 0] = 0
+    # Reset onScreenValues to detect which objects are in the current image
+    for element in detectedObjects:
+        element.setVisibleOnScreen(False)
 
-    # set kalman transition matrix
-    kalman.transition_matrix[0, 0] = 1
-    kalman.transition_matrix[1, 1] = 1
-    kalman.transition_matrix[2, 2] = 1
-    kalman.transition_matrix[3, 3] = 1
-
-    # set Kalman Filter
-    cv.SetIdentity(kalman.measurement_matrix, cv.RealScalar(1))
-    cv.SetIdentity(kalman.process_noise_cov, cv.RealScalar(1e-5))  ## 1e-5
-    cv.SetIdentity(kalman.measurement_noise_cov, cv.RealScalar(1e-1))
-    cv.SetIdentity(kalman.error_cov_post, cv.RealScalar(0.1))
+    # Find elements in list, if there are no elements, we should create them.
+    # Creating objects is only necessary for the first frame.
+    if isFirstFrame:
+        # Compute the connected components
+        cc = getConnectedComponents(img_mask)
+        # Get the pixel coordinates of the first connected component
+        indexes = getLabelCoordinates(img_mask, cc, 1)
+        for idx in range(1,cc.max()+1):
+            indexes = getLabelCoordinates(img_mask, cc, idx)
+            topLeft = (min(indexes[1]), min(indexes[0]))
+            bottomRight = (max(indexes[1]), max(indexes[0]))
+            detectedObject = dO.detection(idx, currentFrame, topLeft, bottomRight, indexes)
+            detectedObjects.append(detectedObject)
 
 
-    #
-    secondFrame = startFrame+1
+    secondFrame = currentFrame+1
 
     # Load the mask
     img_mask = cv2.imread(framesFiles[secondFrame])
@@ -123,19 +111,41 @@ if __name__ == "__main__":
     for idx in range(1,cc.max()+1):
         # Get the pixel coordinates of the first connected component
         indexes = getLabelCoordinates(img_mask, cc, idx)
-
+        isFound = False
         topLeft = (min(indexes[1]), min(indexes[0]))
         bottomRight = (max(indexes[1]), max(indexes[0]))
         centroid = [sum(indexes[0]) / len(indexes[0]), sum(indexes[1]) / len(indexes[1])]
 
-        indexObjectsNumber = 0
+        indexObjectNumber = 0
         for element in detectedObjects:
-            prediction = element.kalmanFilter.computePredictionKalmanFilter(centroid)
-            # Kalman prediction with Kalman Correction with the points I have in trajectory_0000.txt
-            kalman_prediction = cv.KalmanPredict(kalman)
-            print "Kalman prediction: " + str(kalman_prediction[0,0]) + " - " + str(kalman_prediction[1,0])
-            # print "CC:" + str(idx) + " Detected Object: " + str(indexObjectsNumber)
-            print "Real values:       " + str( centroid[0] ) +  " - " + str( centroid[1] )
-            # print "Kalman prediction: " + str(prediction[0]) + " - " + str(prediction[1])
-            # print ""
-            # indexObjectsNumber = indexObjectsNumber+1
+            prediction = element.kalmanFilter.predictKalmanFilter()
+            distance = element.computeDistance(centroid, prediction)
+            if(distance < 10):
+                element.kalmanFilter.updateMeasurement(centroid)
+                prediction = element.kalmanFilter.predictKalmanFilter()
+                indexObjectNumber = element.detectionID
+                element.setVisibleOnScreen(True)
+                isFound = True
+                print "Kalman prediction: " + str(prediction[0]) + " - " + str(prediction[1])
+                print "Real values:       " + str(centroid[0]) + " - " + str(centroid[1])
+                break;
+
+        if not isFound:
+            indexObjectNumber = detectedObjects.__len__()+1
+            detectedObject = dO.detection(indexObjectNumber, secondFrame, topLeft, bottomRight, indexes)
+            detectedObjects.append(detectedObject)
+
+        #Print Bounding boxes in image. Based on the indexObjectNumber detected or created
+        indexObjectNumber
+
+
+    # CHECK THAT !!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Find detectedObjects that are not showing in image since 10 frames ago.
+    # And remove them
+    for element in detectedObjects:
+        if not element.getVisibleOnScreen() and currentFrame > (element.getCurrentFrame+10):
+            detectedObjects.remove(element)
+
+
+    # return detectedObjects, img1, img2

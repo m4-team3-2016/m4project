@@ -3,7 +3,7 @@ import sys
 sys.path.append('../')
 import configuration as conf
 import KalmanFilterClass as kf
-
+import cv2
 
 class detection:
 
@@ -33,6 +33,16 @@ class detection:
         self.bottomRight = bottomRight
         self.centroid = sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1])
         self.centroids = [sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1])]
+        self.kalmanFilter = kf.KalmanFilterClass(id, startFrame, self.centroid)
+
+    def setVisibleOnScreen(self, boolValue):
+        self.onScreen = boolValue
+
+    def getVisibleOnScreen(self):
+        return self.onScreen
+
+    def getCurrentFrame(self):
+        return self.currentFrame
 
     def update(self,currentFrame,topLeft,bottomRight,indexes):
         self.currentFrame = currentFrame
@@ -44,19 +54,17 @@ class detection:
         # The white pixels position
         self.topLeft = topLeft
         self.bottomRight = bottomRight
+
     def comet(self,image,color,cometTail):
         comet = np.zeros_like(image)
 
-        for iTail in range(0,cometTail):
-            if self.currentFrame + iTail in self.frames:
-                cv2.line(comet, centroids[-1-iTail],centroids[-2-iTail], color, 2)
-            else:
-                break
+        # for iTail in range(0,cometTail):
+        #     if self.currentFrame + iTail in self.frames:
+        #         cv2.line(comet, centroids[-1-iTail],centroids[-2-iTail], color, 2)
+        #     else:
+        #         break
 
         return comet
-
-
-        self.kalmanFilter =  kf.KalmanFilterClass(id,startFrame,self.centroid)
 
     def isInLine(self,line):
         distanceToLine = np.abs(self.indexes[0] * line[0] + self.indexes[1] * line[1] + line[2])
@@ -70,3 +78,7 @@ class detection:
             return True
         else:
             return False
+
+    def computeDistance(self, point1, point2):
+        distance = pow((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2,0.5)
+        return distance

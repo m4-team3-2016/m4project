@@ -1,3 +1,5 @@
+
+
 import numpy as np
 import cv2.cv as cv
 
@@ -14,41 +16,36 @@ class KalmanFilterClass:
         self.startFrame = startFrame
         self.currentFrame = startFrame
         self.frames = [self.currentFrame]
-        self.kalman = cv.CreateKalman(4, 2, 0)
-        self.previousValues = cv.CreateMat(2, 1, cv.CV_32FC1)
-        self.initValues = cv.CreateMat(2, 1, cv.CV_32FC1)
-        # This happens only one time to initialize the kalman Filter with the first (x,y) point
-        self.kalman.state_pre[0, 0] = initialPosition[0]
-        self.kalman.state_pre[1, 0] = initialPosition[1]
-        self.kalman.state_pre[2, 0] = 0
-        self.kalman.state_pre[3, 0] = 0
 
-        # set kalman transition matrix
-        self.kalman.transition_matrix[0, 0] = 1
-        self.kalman.transition_matrix[1, 1] = 1
-        self.kalman.transition_matrix[2, 2] = 1
-        self.kalman.transition_matrix[3, 3] = 1
-
-        # set Kalman Filter
-        cv.SetIdentity(self.kalman.measurement_matrix, cv.RealScalar(1))
-        cv.SetIdentity(self.kalman.process_noise_cov, cv.RealScalar(1e-5))  ## 1e-5
-        cv.SetIdentity(self.kalman.measurement_noise_cov, cv.RealScalar(1e-1))
-        cv.SetIdentity(self.kalman.error_cov_post, cv.RealScalar(0.1))
+        self.currentPositionX = initialPosition[0]
+        self.currentPositionY = initialPosition[1]
+        self.prioriEstimateX = self.currentPositionX
+        self.prioriEstimateY = self.currentPositionY
+        self.posterioriErrorX = 0
+        self.posterioriErrorY = 0
+        self.prioriErrorX = 0
+        self.prioriErrorY = 0
+        self.gainX = 0
+        self.gainY = 0
+        self.Q = 1e-5  # process variance
+        self.R = 0.1 ** 2  # estimate of measurement variance, change to see effect
 
 
-    def computePredictionKalmanFilter(self, currentPosition):
-        kalman_prediction = cv.KalmanPredict(self.kalman)
-        kalman_prediction = np.array([kalman_prediction[0, 0], kalman_prediction[1, 0]])
-        return kalman_prediction
+    def predictKalmanFilter(self):
+        return [self.prioriEstimateX, self.prioriEstimateY]
 
-    def correctKalmanFilter(self, currentPosition):
-        rightPoints = cv.CreateMat(2, 1, cv.CV_32FC1)
-        rightPoints[0, 0] = currentPosition[0]
-        rightPoints[1, 0] = currentPosition[1]
+    def updateMeasurement(self, currentPosition):
+        # Compute X update
+        self.prioriErrorX = self.posterioriErrorX + self.Q
+        self.gainX = self.prioriErrorX / (self.prioriErrorX + self.R)
+        self.currentPositionX = self.prioriEstimateX + self.gainX * (currentPosition[0]-self.prioriEstimateX)
+        self.posterioriErrorX = (1-self.gainX)*self.prioriErrorX
+        self.prioriEstimateX = self.currentPositionX
 
-        self.kalman.state_pre[0, 0] = currentPosition[0]
-        self.kalman.state_pre[1, 0] = currentPosition[1]
-        self.kalman.state_pre[2, 0] = 0
-        self.kalman.state_pre[3, 0] = 0
+        # Compute X update
+        self.prioriErrorY = self.posterioriErrorY + self.Q
+        self.gainY = self.prioriErrorY / (self.prioriErrorY + self.R)
+        self.currentPositionY = self.prioriEstimateY + self.gainY * (currentPosition[1]-self.prioriEstimateY)
+        self.posterioriErrorY = (1-self.gainY)*self.prioriErrorY
+        self.prioriEstimateY = self.currentPositionY
 
-        estimated = cv.KalmanCorrect(self.kalman, rightPoints)
