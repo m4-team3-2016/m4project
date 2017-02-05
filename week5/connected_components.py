@@ -131,7 +131,7 @@ if __name__ == "__main__":
                 break;
 
         if not isFound:
-            indexObjectNumber = detectedObjects.__len__()+1
+            indexObjectNumber = detectedObjects[detectedObjects.__len__()-1].detectionID + 1
             detectedObject = dO.detection(indexObjectNumber, secondFrame, topLeft, bottomRight, indexes)
             detectedObjects.append(detectedObject)
 
