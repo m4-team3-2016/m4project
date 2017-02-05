@@ -18,8 +18,8 @@ import morphology as mp
 
 
 def getObjectsFromFrame(frame,mu,sigma,alpha):
-    #TODO: FIX THIS
-    colorSpace = 'gray'
+
+    colorSpace = finalConf.colorSpace
     # Background Substraction:
     if colorSpace != 'gray':
         out = np.abs(frame[:,:,0] - mu[:,:,0]) >= alpha * (sigma[:,:,0] + 2)

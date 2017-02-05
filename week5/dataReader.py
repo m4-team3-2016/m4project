@@ -8,12 +8,8 @@ def getSingleFrame(dataFile,frameNumber,convertColor = True):
     else:
         dataFile.set(1,frameNumber)
         ret,frame = dataFile.read()
-    print convertColor
     if finalConf.colorSpace != "BGR" and convertColor:
-        print "Converting"
         frame = cv2.cvtColor(np.asarray(frame),finalConf.colorSpaceConversion[finalConf.colorSpace])
-    else:
-        print"not converting"
     return frame
 
 def getFrameAndPrevious(dataFile,frameNumber,convertColor = True):

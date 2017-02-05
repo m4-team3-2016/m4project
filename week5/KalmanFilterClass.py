@@ -1,7 +1,7 @@
 
 
 import numpy as np
-import cv2.cv as cv
+#import cv2.cv as cv
 
 
 import sys
@@ -48,4 +48,3 @@ class KalmanFilterClass:
         self.currentPositionY = self.prioriEstimateY + self.gainY * (currentPosition[1]-self.prioriEstimateY)
         self.posterioriErrorY = (1-self.gainY)*self.prioriErrorY
         self.prioriEstimateY = self.currentPositionY
-

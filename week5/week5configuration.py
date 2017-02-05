@@ -14,7 +14,7 @@ colorSpaceConversion['gray']  = cv2.COLOR_BGR2GRAY
 colorSpaceConversion['LUV']   = cv2.COLOR_BGR2LUV
 colorSpaceConversion['LAB']   = cv2.COLOR_BGR2LAB
 
-colorSpace = 'HLS'
+colorSpace = 'HSV'
 
 
 # Background Substraction

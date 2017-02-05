@@ -15,21 +15,24 @@ import glob
 from skimage import morphology
 import drawBoundingBox as dbb
 import detectedObject as dO
-import cv2.cv as cv
+import cv2
+import inspect
+#import cv2.cv as cv
 
 
 def getConnectedComponents(img_mask):
     # Binarize the image
-    img_mask = np.where(img_mask > 1, 1, 0)
+    if img_mask.max()> 1:
+        img_mask = np.where(img_mask > 1, 1, 0)
     # Detect connected components and assign an ID to each one
-    connected_components_img = morphology.label(img_mask, background=0) 
+    connected_components_img = morphology.label(img_mask, background=0)
     return connected_components_img
-    
-    
+
+
 def getLabelCoordinates(connected_components_img, idx):
     # Find where labels in connected_components_img are equal to idx
     return np.where(connected_components_img == idx)
-    
+
 
 def drawCurrentBoundingBox(img_color, index, topLeft, bottomRight, isInfracting=False):
     alpha = 0.5
@@ -72,7 +75,6 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
     # Reset onScreenValues to detect which objects are in the current image
     for element in detectedObjects:
         element.setVisibleOnScreen(False)
-
     secondFrame = frameID+1
     # Compute the connected components
     cc = getConnectedComponents(imgMask2)
@@ -128,14 +130,14 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
     # Find detectedObjects that are not showing in image since 10 frames ago.
     # And remove them
     for element in detectedObjects:
-        if not element.getVisibleOnScreen() and frameID > (element.getCurrentFrame+10):
+        if not element.getVisibleOnScreen() and frameID > (element.getCurrentFrame() + 10):
             detectedObjects.remove(element)
 
     return detectedObjects, img1, img2
 
 
 if __name__ == "__main__":
-    
+
     import cv2
 
     frameID = 44
