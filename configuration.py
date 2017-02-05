@@ -13,7 +13,7 @@ isMac = True
 isHoleFilling = True
 isMorphology = True
 fourConnectivity = True # If it is set to False, it will be 8 connectivity
-isShadowremoval = True
+isShadowremoval = False
 
 noise_filter_size = 5
 vert_filter_size = 20

@@ -20,22 +20,43 @@ class detection:
         self.height = h
 
 
-    def __init__(self,id,startFrame,topLeft,bottomRight,indexes):
-        self.id = id
+    def __init__(self,detectionID,startFrame,topLeft,bottomRight,indexes):
+        self.detectionID = detectionID
         self.startFrame = startFrame
         self.currentFrame = startFrame
         self.frames = [self.currentFrame]
         self.checkWidthHeight(topLeft,bottomRight)
-        # The white pixels position
-        self.indexes = [indexes]
+        self.onScreen = True
         self.topLeft = topLeft
         self.bottomRight = bottomRight
+        self.centroid = sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1])
+        self.centroids = [sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1])]
 
-        self.centroid = [sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1])]
+    def update(self,currentFrame,topLeft,bottomRight,indexes):
+        self.currentFrame = currentFrame
+        self.frames.append(currentFrame)
+        self.centroid = (sum(indexes[0])/len(indexes[0]),sum(indexes[1])/len(indexes[1]))
+        self.centroids.append(self.centroid)
+
+        self.checkWidthHeight(topLeft,bottomRight)
+        # The white pixels position
+        self.topLeft = topLeft
+        self.bottomRight = bottomRight
+    def comet(self,image,color,cometTail):
+        comet = np.zeros_like(image)
+
+        for iTail in range(0,cometTail):
+            if self.currentFrame + iTail in self.frames:
+                cv2.line(comet, centroids[-1-iTail],centroids[-2-iTail], color, 2)
+            else:
+                break
+
+        return comet
+
 
     def isInLine(self,line):
         distanceToLine = np.abs(self.indexes[0] * line[0] + self.indexes[1] * line[1] + line[2])
-        if min(distance) < 2:
+        if min(distanceToLine) < 2:
             return True
         else:
             return False
