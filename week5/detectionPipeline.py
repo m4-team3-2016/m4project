@@ -14,6 +14,7 @@ import week5configuration as finalConf
 import holefillingFunction as hf
 import shadowRemoval as sr
 import morphology as mp
+import bwareaopen as bw
 
 
 
@@ -33,6 +34,10 @@ def getObjectsFromFrame(frame,mu,sigma,alpha):
     # Hole filling
     if conf.isHoleFilling:
         out = hf.holefilling(out, conf.fourConnectivity)
+
+    if conf.isAreFilling:
+        out = bw.bwareaopen(out,conf.areaOptimal)
+
 
     # Morpholoy filters
     if conf.isMorphology:
