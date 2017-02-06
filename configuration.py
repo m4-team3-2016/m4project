@@ -1,8 +1,7 @@
 #!/usr/bin/env
 import cv2
 
-
-ID = "Own"
+ID = "Highway"
 
 colorSpaceConversion = {}
 OptimalColorSpaces = {}

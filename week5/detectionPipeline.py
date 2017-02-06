@@ -17,9 +17,10 @@ import morphology as mp
 
 
 
-def getObjectsFromFrame(frame,mu,sigma,alpha):
+def getObjectsFromFrame(frame,mu,sigma,alpha, rho):
 
     colorSpace = finalConf.colorSpace
+
     # Background Substraction:
     if colorSpace != 'gray':
         out = np.abs(frame[:,:,0] - mu[:,:,0]) >= alpha * (sigma[:,:,0] + 2)
@@ -46,33 +47,68 @@ def getObjectsFromFrame(frame,mu,sigma,alpha):
     if False:#conf.isHoleFilling and conf.isShadowremoval:
         out = hf.holefilling(out, conf.fourConnectivity)
 
-    return out
+    if colorSpace != 'gray':
+        outExtraDimension = np.stack([out, out, out], axis=-1)
+        outFlat = outExtraDimension.ravel()
+    else:
+        outFlat = out.ravel()
+
+    muFlat = mu.ravel()
+    sigmaFlat = (sigma.ravel()) ** 2
+    frameFlat = frame.ravel()
+
+    muFlat = np.multiply(outFlat, muFlat) + np.multiply((rho * frameFlat + (1 - rho) * muFlat), (1 - outFlat))
+    sigmaFlat = np.multiply(outFlat, sigmaFlat) + np.multiply((rho * (frameFlat - muFlat) ** 2 + (1 - rho) * sigmaFlat),
+                                                              (1 - outFlat))
+    sigmaFlat = np.sqrt(sigmaFlat)
+
+    if colorSpace == 'gray':
+        mu = muFlat.reshape(mu.shape[0], mu.shape[1])
+        sigma = sigmaFlat.reshape(sigma.shape[0], sigma.shape[1])
+    else:
+        mu = muFlat.reshape(mu.shape[0], mu.shape[1], frame.shape[2])
+        sigma = sigmaFlat.reshape(sigma.shape[0], sigma.shape[1], frame.shape[2])
+
+    return out, mu, sigma
+
+
 
 def getMuSigma(data,trainingRange):
+    colorSpace = finalConf.colorSpace
 
-    frame = dataReader.getSingleFrame(data,0)
-
-
-    mu = np.zeros_like(frame).ravel()
-    sigma = np.zeros_like(frame).ravel()
-    nFrames = 0
-    for idx in trainingRange:
-        frame = dataReader.getSingleFrame(data,idx)
-
-        mu = ((idx) * mu + frame.ravel())/float(idx + 1)
-        nFrames +=1
-
-    for idx in trainingRange:
-        frame = dataReader.getSingleFrame(data,idx)
-        sigma = sigma + (frame.ravel() - mu)**2
-
-    sigma = np.sqrt(sigma / max(0,int(nFrames)))
-
-    if finalConf.colorSpace == 'gray':
-        mu = mu.reshape(frame.shape[0],frame.shape[1])
-        sigma = sigma.reshape(frame.shape[0],frame.shape[1])
+    if finalConf.ID is 'Video':
+        print 'Do something with empty frames.' # Frames without cars
+        # MUST BE DONE
+        mu = np.zeros_like(10).ravel()
+        sigma = np.zeros_like(10).ravel()
+        return mu, sigma
     else:
-        mu = mu.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
-        sigma = sigma.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
 
-    return mu, sigma
+        frame = dataReader.getSingleFrame(data,0)
+
+        mu = np.zeros_like(frame).ravel()
+        sigma = np.zeros_like(frame).ravel()
+
+        #Background estimation
+        for idx in trainingRange:
+            frame = dataReader.getSingleFrame(data, idx, False)
+            if colorSpace != 'BGR':
+                frame = cv2.cvtColor(frame, finalConf.colorSpaceConversion[colorSpace])
+            mu = ((idx) * mu + frame.ravel())/float(idx + 1)
+
+        for idx in trainingRange:
+            frame = dataReader.getSingleFrame(data, idx, False)
+            if colorSpace != 'BGR':
+                frame = cv2.cvtColor(frame, finalConf.colorSpaceConversion[colorSpace])
+            sigma = sigma + (frame.ravel() - mu) ** 2
+
+        sigma = np.sqrt(sigma / len(trainingRange))
+
+        if colorSpace == 'gray':
+            mu = mu.reshape(frame.shape[0],frame.shape[1])
+            sigma = sigma.reshape(frame.shape[0],frame.shape[1])
+        else:
+            mu = mu.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
+            sigma = sigma.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
+
+        return mu, sigma

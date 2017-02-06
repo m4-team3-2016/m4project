@@ -4,7 +4,7 @@ import numpy as np
 
 def getSingleFrame(dataFile,frameNumber,convertColor = True):
     if isinstance(dataFile,list):
-        frame =  cv2.imread(list[frameNumber])
+        frame =  cv2.imread(dataFile[frameNumber])
     else:
         dataFile.set(1,frameNumber)
         ret,frame = dataFile.read()

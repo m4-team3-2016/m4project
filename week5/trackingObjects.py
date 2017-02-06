@@ -22,11 +22,7 @@ import inspect
 
 def getConnectedComponents(img_mask):
     # Binarize the image
-<<<<<<< HEAD
     if img_mask.max()> 1:
-=======
-    if img_mask.max() > 1:
->>>>>>> aa478b4e21f141771071654c38451fa15130d8be
         img_mask = np.where(img_mask > 1, 1, 0)
     # Detect connected components and assign an ID to each one
     connected_components_img = morphology.label(img_mask, background=0)
