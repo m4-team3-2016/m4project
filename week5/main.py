@@ -6,6 +6,7 @@ import sys
 import dataReader
 import detectionPipeline as pipeline
 import trackingObjects as tracking
+import stabizateFrames as stFrame
 
 
 sys.path.append('../')
@@ -38,40 +39,58 @@ if __name__ == "__main__":
 
     # First stage: Training
     trainingRange = range(int(finalConf.trainingPercentage[ID] * nFrames))
-    testingRange = range(int(finalConf.trainingPercentage[ID] * nFrames),nFrames)
+    testingRange = range(int(finalConf.trainingPercentage[ID] * nFrames)+1,nFrames)
 
-    mu,sigma = pipeline.getMuSigma(data,trainingRange)
+    print "Starting training.. This takes too long. For faster computing goes to stabizateFrames.py line 160 and discomment"
+    mu,sigma, lastStabilizedFrame = pipeline.getMuSigma(data,trainingRange)
     # res = np.concatenate((mu,sigma),1)
     # cv2.imwrite('musigma.png',res)
-    
+
     # Second stage: testing
     startingFrame = testingRange[0]
     for idx in testingRange:
-        print "Reading frames " + str(idx-1) + " and " + str(idx)
+        print "Reading frames " + str(idx) + " and " + str(idx+1)
         if idx == startingFrame:
-            frame2,frame1 = dataReader.getFrameAndPrevious(data,idx)
             originalFrame2,originalFrame1 = dataReader.getFrameAndPrevious(data,idx,False)
+            # If we are doing Traffic or Highway we take the last stabilizated sample.
+            if ID is not 'Own':
+                originalFrame1S = stFrame.stabilizatePairOfImages(lastStabilizedFrame, originalFrame1)
+                originalFrame2S = stFrame.stabilizatePairOfImages(originalFrame1, originalFrame2)
+            else:
+                originalFrame1S = originalFrame1
+                originalFrame2S = stFrame.stabilizatePairOfImages(originalFrame1, originalFrame2)
+            # Convert images to INT
+            frame1 = cv2.cvtColor(originalFrame1S.astype(np.uint8), finalConf.colorSpaceConversion[finalConf.colorSpace])
+            frame2 = cv2.cvtColor(originalFrame2S.astype(np.uint8), finalConf.colorSpaceConversion[finalConf.colorSpace])
+            frame1 = frame1[finalConf.area_size:frame1.shape[0]-finalConf.area_size,finalConf.area_size:frame1.shape[1]-finalConf.area_size]
+            frame2 = frame2[finalConf.area_size:frame2.shape[0] - finalConf.area_size, finalConf.area_size:frame2.shape[1] - finalConf.area_size]
         else:
             frame1 = frame2
-            originalFrame1 = originalFrame2
-            frame2 = dataReader.getSingleFrame(data,idx)
+            originalFrame1S = originalFrame2S
             originalFrame2 = dataReader.getSingleFrame(data,idx,False)
-        print frame1.shape, frame2.shape
+            originalFrame2S = stFrame.stabilizatePairOfImages(originalFrame1S, originalFrame2)
+            frame2 = cv2.cvtColor(originalFrame2S.astype(np.uint8),finalConf.colorSpaceConversion[finalConf.colorSpace])
+            frame2 = frame2[finalConf.area_size:frame2.shape[0] - finalConf.area_size, finalConf.area_size:frame2.shape[1] - finalConf.area_size]
+        # print frame1.shape, frame2.shape
         out1, mu, sigma = pipeline.getObjectsFromFrame(frame1,mu,sigma,alpha, rho)
         out2, mu, sigma = pipeline.getObjectsFromFrame(frame2,mu,sigma,alpha, rho)
-        # Third stage: Stabilizate
+        originalFrame1SZoom = originalFrame1S[finalConf.area_size:originalFrame1S.shape[0] - finalConf.area_size, finalConf.area_size:originalFrame1S.shape[1] - finalConf.area_size]
+        originalFrame2SZoom = originalFrame2S[finalConf.area_size:originalFrame2S.shape[0] - finalConf.area_size, finalConf.area_size:originalFrame2S.shape[1] - finalConf.area_size]
 
         '''
         cv2.imshow('test',np.concatenate((frame1Color[:,:,0],frame1*255),1))
         cv2.waitKey(0)
         '''
         if idx == startingFrame:
-            objectList, bbox1, bbox2 = tracking.computeTrackingBetweenFrames(True,[],idx,originalFrame1,out1,originalFrame2,out2)
-            cv2.imshow("bbox1", bbox1)
-            cv2.waitKey(0)
+            objectList, bbox1, bbox2 = tracking.computeTrackingBetweenFrames(True,[],idx,originalFrame1SZoom,out1,originalFrame2SZoom,out2)
+            res = np.concatenate((bbox1,np.stack([out1*255, out1*255, out1*255], axis=-1)),1)
+            cv2.imwrite("./results/Image_" + str(idx) + '.png', res)
+            # cv2.imshow("Image " + str(idx), res)
+            # cv2.waitKey(0)
         else:
-            objectList, bbox1, bbox2 = tracking.computeTrackingBetweenFrames(False,objectList,idx,originalFrame1,out1,originalFrame2,out2)
+            objectList, bbox1, bbox2 = tracking.computeTrackingBetweenFrames(False,objectList,idx,originalFrame1SZoom,out1,originalFrame2SZoom,out2)
 
-
-        cv2.imshow("bbox2",bbox2)
-        cv2.waitKey(0)
+        res = np.concatenate((bbox2, np.stack([out2 * 255, out2 * 255, out2 * 255], axis=-1)), 1)
+        cv2.imwrite("./results/Image_" + str(idx+1)+'.png', res)
+        # cv2.imshow("Image " + str(idx), res)
+        # cv2.waitKey(0)

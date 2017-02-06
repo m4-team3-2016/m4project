@@ -43,3 +43,18 @@ folders = {}
 folders["Video"]  = "video.mp4"
 folders["Highway"]  = "../../../datasetDeliver_2/highway/input/"
 folders["Traffic"]  = "../../../datasetDeliver_2/traffic/input/"
+
+
+################# Stab #####################
+block_size = 16
+area_size = 16
+compensation = 'backward'  # or 'forward'
+isReferenceImageFixed = False
+
+
+#  KALMAN FILTER
+KalmanFilterThreshold = {}
+KalmanFilterThreshold["Video"]  = 80
+KalmanFilterThreshold["Highway"]  = 50
+KalmanFilterThreshold["Traffic"]  = 80
+carCounting = 0

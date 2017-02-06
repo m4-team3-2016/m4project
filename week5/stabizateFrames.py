@@ -1,5 +1,5 @@
 import cv2
-import configuration as conf
+import week5configuration as conf
 import numpy as np
 import glob
 import sys
@@ -157,14 +157,15 @@ def compute_block_matching(prev_img, curr_img):
 # def stabilizatePairOfImages( image1, image2) will stabilizate image2 respect
 # to image1. Thus, image1 must be previously stabilizated.
 def stabilizatePairOfImages( image1, image2):
+    return image2
     # Inizializate variables
     block_size = conf.block_size
     area_size = conf.area_size
     compensation = conf.compensation
 
     # Conver images to BW for computing OF
-    image1BW = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
-    image2BW = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+    image1BW = cv2.cvtColor(image1.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+    image2BW = cv2.cvtColor(image2.astype(np.uint8), cv2.COLOR_BGR2GRAY)
 
     # Apply block matching
     motion_matrix = compute_block_matching(image1BW, image2BW)

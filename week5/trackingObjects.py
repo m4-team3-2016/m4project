@@ -18,6 +18,7 @@ import detectedObject as dO
 import cv2
 import inspect
 #import cv2.cv as cv
+import week5configuration as finalConf
 
 
 def getConnectedComponents(img_mask):
@@ -55,6 +56,9 @@ def drawCurrentBoundingBox(img_color, index, topLeft, bottomRight, isInfracting=
 
 def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, imgMask1, img2, imgMask2):
 
+    if frameID == 282:
+        casa = 8
+
     # Find elements in list, if there are no elements, we should create them.
     # Creating objects is only necessary for the first frame.
     if isFirstFrame:
@@ -68,6 +72,7 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
             bottomRight = (max(indexes[1]), max(indexes[0]))
             detectedObject = dO.detection(idx, frameID, topLeft, bottomRight, indexes)
             detectedObjects.append(detectedObject)
+            finalConf.carCounting = finalConf.carCounting+1
             # Print Bounding boxes in image. Based on the indexObjectNumber detected or created
             isInfracting = False
             img1 = drawCurrentBoundingBox(img1, idx, topLeft, bottomRight, isInfracting)
@@ -88,7 +93,7 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
         centroid = [sum(indexes[0]) / len(indexes[0]), sum(indexes[1]) / len(indexes[1])]
 
         indexObjectNumber = 0
-
+        minDistance = 100
         # Kalman Filter
         for element in detectedObjects:
             if element.getVisibleOnScreen():
@@ -97,15 +102,20 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
             prediction = element.kalmanFilter.predictKalmanFilter()
             distance = element.computeDistance(centroid, prediction)
             # print "Distance between centroids:       " + str(distance)
-            if(distance < 10):
-                element.kalmanFilter.updateMeasurement(centroid)
-                prediction = element.kalmanFilter.predictKalmanFilter()
-                indexObjectNumber = element.detectionID
-                element.setVisibleOnScreen(True)
-                isFound = True
+            if(distance < finalConf.KalmanFilterThreshold[finalConf.ID]):
+                if distance < minDistance:
+                    minDistance = distance
+                    indexObjectNumber = element.detectionID
+                    isFound = True
                 # print "Kalman prediction: " + str(prediction[0]) + " - " + str(prediction[1])
                 # print "Real values:       " + str(centroid[0]) + " - " + str(centroid[1])
-                break;
+        if isFound:
+            for element in detectedObjects:
+                if element.detectionID == indexObjectNumber:
+                    element.kalmanFilter.updateMeasurement(centroid)
+                    prediction = element.kalmanFilter.predictKalmanFilter()
+                    indexObjectNumber = element.detectionID
+                    element.setVisibleOnScreen(True)
 
         # Coherence Between Centroids
         # for element in detectedObjects:
@@ -119,7 +129,8 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
         #         break;
 
         if not isFound:
-            indexObjectNumber = detectedObjects[detectedObjects.__len__()-1].detectionID + 1
+            finalConf.carCounting = finalConf.carCounting + 1
+            indexObjectNumber = finalConf.carCounting
             detectedObject = dO.detection(indexObjectNumber, secondFrame, topLeft, bottomRight, indexes)
             detectedObjects.append(detectedObject)
 

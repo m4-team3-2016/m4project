@@ -11,9 +11,12 @@ for i in range(1,5):
 import configuration as conf
 import week5configuration as finalConf
 
+import stabizateFrames
+
 import holefillingFunction as hf
 import shadowRemoval as sr
 import morphology as mp
+import stabizateFrames as stFrame
 
 
 
@@ -75,32 +78,53 @@ def getObjectsFromFrame(frame,mu,sigma,alpha, rho):
 
 def getMuSigma(data,trainingRange):
     colorSpace = finalConf.colorSpace
+    currentFrame = dataReader.getSingleFrame(data, 0, False)
 
     if finalConf.ID is 'Video':
         print 'Do something with empty frames.' # Frames without cars
         # MUST BE DONE
         mu = np.zeros_like(10).ravel()
         sigma = np.zeros_like(10).ravel()
-        return mu, sigma
+        return mu, sigma, currentFrame
     else:
-
-        frame = dataReader.getSingleFrame(data,0)
-
-        mu = np.zeros_like(frame).ravel()
-        sigma = np.zeros_like(frame).ravel()
+        mu = np.zeros_like(currentFrame).ravel()
+        sigma = np.zeros_like(currentFrame).ravel()
 
         #Background estimation
+        print 'Computing mu ...'
         for idx in trainingRange:
-            frame = dataReader.getSingleFrame(data, idx, False)
-            if colorSpace != 'BGR':
-                frame = cv2.cvtColor(frame, finalConf.colorSpaceConversion[colorSpace])
-            mu = ((idx) * mu + frame.ravel())/float(idx + 1)
+            # print 'Image ' + str(idx)
+            if idx is not 0:
+                frame = dataReader.getSingleFrame(data, idx, False)
+                frameS = stFrame.stabilizatePairOfImages(currentFrame, frame)
+                currentFrame = frameS
+                if colorSpace != 'BGR':
+                    frameS = cv2.cvtColor(frameS.astype(np.uint8), finalConf.colorSpaceConversion[colorSpace])
+                mu = ((idx) * mu + frameS.ravel())/float(idx + 1)
+            else:
+                if colorSpace != 'BGR':
+                    frameS = cv2.cvtColor(currentFrame.astype(np.uint8), finalConf.colorSpaceConversion[colorSpace])
+                else:
+                    frameS = currentFrame
+                mu = ((idx) * mu + frameS.ravel())/float(idx + 1)
 
+        currentFrame = dataReader.getSingleFrame(data, 0, False)
+        print 'Computing sigma ...'
         for idx in trainingRange:
-            frame = dataReader.getSingleFrame(data, idx, False)
-            if colorSpace != 'BGR':
-                frame = cv2.cvtColor(frame, finalConf.colorSpaceConversion[colorSpace])
-            sigma = sigma + (frame.ravel() - mu) ** 2
+            # print 'Image ' + str(idx)
+            if idx is not trainingRange[0]:
+                frame = dataReader.getSingleFrame(data, idx, False)
+                frameS = stFrame.stabilizatePairOfImages(currentFrame, frame)
+                currentFrame = frameS
+                if colorSpace != 'BGR':
+                    frameS = cv2.cvtColor(frameS.astype(np.uint8), finalConf.colorSpaceConversion[colorSpace])
+                sigma = sigma + (frameS.ravel() - mu) ** 2
+            else:
+                if colorSpace != 'BGR':
+                    frameS = cv2.cvtColor(currentFrame.astype(np.uint8), finalConf.colorSpaceConversion[colorSpace])
+                else:
+                    frameS = currentFrame
+                sigma = sigma + (frameS.ravel() - mu) ** 2
 
         sigma = np.sqrt(sigma / len(trainingRange))
 
@@ -111,4 +135,7 @@ def getMuSigma(data,trainingRange):
             mu = mu.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
             sigma = sigma.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
 
-        return mu, sigma
+            mu = mu[finalConf.area_size:mu.shape[0] - finalConf.area_size, finalConf.area_size:mu.shape[1] - finalConf.area_size]
+            sigma = sigma[finalConf.area_size:sigma.shape[0] - finalConf.area_size,finalConf.area_size:sigma.shape[1] - finalConf.area_size]
+
+        return mu, sigma, frameS
