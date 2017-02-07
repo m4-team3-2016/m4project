@@ -40,57 +40,14 @@ def camera_motion(real_x, real_y, curr_img):
         print 'ERROR dimension'
         return curr_img
 
-    for x_pos in range(x_blocks):
-        for y_pos in range(y_blocks):
-            # +y or -y depending on compensation mode
-            if conf.compensation == 'backward':
-                if curr_img.shape.__len__() == 2:
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size] = new_curr_img[
-                                                                          x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                          y_pos * block_size - real_y + area_size:y_pos * block_size + block_size - real_y + area_size]
+    if curr_img.shape.__len__() == 2:
+        comp_img[0:comp_img.shape[0], 0:comp_img.shape[1]] = new_curr_img[0+ real_x :comp_img.shape[0] + real_x , 0 + real_y:comp_img.shape[1]+ real_y]
 
-                elif curr_img.shape.__len__() == 3:
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size, 0] = new_curr_img[
-                                                                             x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                             y_pos * block_size - real_y + area_size:y_pos * block_size + block_size - real_y + area_size,
-                                                                             0]
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size, 1] = new_curr_img[
-                                                                             x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                             y_pos * block_size - real_y + area_size:y_pos * block_size + block_size - real_y + area_size,
-                                                                             1]
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size, 2] = new_curr_img[
-                                                                             x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                             y_pos * block_size - real_y + area_size:y_pos * block_size + block_size - real_y + area_size,
-                                                                             2]
+    elif curr_img.shape.__len__() == 3:
+        comp_img[0:comp_img.shape[0], 0:comp_img.shape[1], 0] = new_curr_img[area_size + real_x : area_size + comp_img.shape[0] + real_x , area_size + real_y : area_size + comp_img.shape[1] + real_y , 0]
+        comp_img[0:comp_img.shape[0], 0:comp_img.shape[1], 1] = new_curr_img[area_size + real_x : area_size + comp_img.shape[0] + real_x , area_size + real_y : area_size + comp_img.shape[1] + real_y , 1]
+        comp_img[0:comp_img.shape[0], 0:comp_img.shape[1], 2] = new_curr_img[area_size + real_x : area_size + comp_img.shape[0] + real_x , area_size + real_y : area_size + comp_img.shape[1] + real_y , 2]
 
-            else:
-                if curr_img.shape.__len__() == 2:
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size] = new_curr_img[
-                                                                          x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                          y_pos * block_size + real_y + area_size:y_pos * block_size + block_size + real_y + area_size]
-                elif curr_img.shape.__len__() == 3:
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size, 0] = new_curr_img[
-                                                                             x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                             y_pos * block_size + real_y + area_size:y_pos * block_size + block_size + real_y + area_size,
-                                                                             0]
-
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size, 1] = new_curr_img[
-                                                                             x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                             y_pos * block_size + real_y + area_size:y_pos * block_size + block_size + real_y + area_size,
-                                                                             1]
-
-                    comp_img[x_pos * block_size:x_pos * block_size + block_size,
-                    y_pos * block_size:y_pos * block_size + block_size, 2] = new_curr_img[
-                                                                             x_pos * block_size + real_x + area_size:x_pos * block_size + block_size + real_x + area_size,
-                                                                             y_pos * block_size + real_y + area_size:y_pos * block_size + block_size + real_y + area_size,
-                                                                             2]
     return comp_img
 
 # Auxiliary function
