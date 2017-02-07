@@ -35,7 +35,8 @@ def getObjectsFromFrame(frame,mu,sigma,alpha, rho):
     out = out.astype(np.uint8)
     if finalConf.ID == 'Own':
         ROImask = cv2.imread('ROI.png')
-        ROImask = ROImask[:,:,0]/255
+        ROImask = ROImask[:,:,0]
+        ROImask[np.where(ROImask != 0)] = 1
         # ROI filtering
         out = np.multiply(ROImask,out)
     # Hole filling
