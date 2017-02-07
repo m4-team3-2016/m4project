@@ -12,7 +12,7 @@ sys.path.append('../tools/')
 import numpy as np
 import configuration as conf
 import glob
-from skimage import morphology
+from skimage import measure
 import drawBoundingBox as dbb
 import detectedObject as dO
 import cv2
@@ -26,7 +26,7 @@ def getConnectedComponents(img_mask):
     if img_mask.max()> 1:
         img_mask = np.where(img_mask > 1, 1, 0)
     # Detect connected components and assign an ID to each one
-    connected_components_img = morphology.label(img_mask, background=0)
+    connected_components_img = measure.label(img_mask, background=0)
     return connected_components_img
 
 

@@ -1,7 +1,7 @@
 import cv2
 
 
-ID = "Highway" # # Highway | Traffic | Video
+ID = "Own" # # Highway | Traffic | Video
 # Mode regarding video or folders:
 mode = 'folder' # video | folder
 # A .mp4 file if mode is video, a folder with all the frames if mode is folder
@@ -17,17 +17,17 @@ colorSpaceConversion['gray']  = cv2.COLOR_BGR2GRAY
 colorSpaceConversion['LUV']   = cv2.COLOR_BGR2LUV
 colorSpaceConversion['LAB']   = cv2.COLOR_BGR2LAB
 
-colorSpace = 'LUV'
+colorSpace = 'HSV'
 
 OptimalAlphaParameter = {}
 OptimalAlphaParameter["Highway"]   = 1.8
 OptimalAlphaParameter["Traffic"]   = 1.9
-OptimalAlphaParameter["Video"]     = 1000000
+OptimalAlphaParameter["Own"]     = 1.5
 
 OptimalRhoParameter = {}
 OptimalRhoParameter["Highway"]   = 0.04
 OptimalRhoParameter["Traffic"]   = 0.03
-OptimalRhoParameter["Video"]      = 1000000
+OptimalRhoParameter["Own"]      = 0.04
 
 
 
@@ -35,12 +35,15 @@ OptimalRhoParameter["Video"]      = 1000000
 trainingPercentage = {}
 trainingPercentage["Highway"] = 0.5
 trainingPercentage["Traffic"] = 0.5
-trainingPercentage["Video"] = 1
+trainingPercentage["Own"] = 0.5
 
+isHoleFilling = True
+isMorphology = True
+isShadowremoval = False
 
 folders = {}
 # Axel's paths
-folders["Video"]  = "video.mp4"
+folders["Own"]  = "video.mp4"
 folders["Highway"]  = "../../../datasetDeliver_2/highway/input/"
 folders["Traffic"]  = "../../../datasetDeliver_2/traffic/input/"
 
@@ -54,7 +57,7 @@ isReferenceImageFixed = False
 
 #  KALMAN FILTER
 KalmanFilterThreshold = {}
-KalmanFilterThreshold["Video"]  = 80
+KalmanFilterThreshold["Own"]  = 80
 KalmanFilterThreshold["Highway"]  = 50
 KalmanFilterThreshold["Traffic"]  = 80
 carCounting = 0

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     rho = finalConf.OptimalRhoParameter[ID]
 
     # Read the video/files and count images
-    if ID == "Video":
+    if ID == "Own":
         data = cv2.VideoCapture(path)
         nFrames = int(data.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = data.get(cv2.CAP_PROP_FPS)
@@ -38,8 +38,14 @@ if __name__ == "__main__":
         fps = 30.0 # Educated guess
 
     # First stage: Training
-    trainingRange = range(int(finalConf.trainingPercentage[ID] * nFrames))
-    testingRange = range(int(finalConf.trainingPercentage[ID] * nFrames)+1,nFrames)
+
+    if ID == "Own":
+        trainingRange = np.hstack((range(275,285),range(610,630),range(1000,1010),range(1333,1365),range(1530,1548)))
+        testingRange = range(300)
+    else:
+        trainingRange = range(int(finalConf.trainingPercentage[ID] * nFrames))
+        testingRange = range(int(finalConf.trainingPercentage[ID] * nFrames)+1,nFrames)
+
 
     print "Starting training.. This takes too long. For faster computing goes to stabizateFrames.py line 160 and discomment"
     mu,sigma, lastStabilizedFrame = pipeline.getMuSigma(data,trainingRange)
@@ -91,6 +97,6 @@ if __name__ == "__main__":
             objectList, bbox1, bbox2 = tracking.computeTrackingBetweenFrames(False,objectList,idx,originalFrame1SZoom,out1,originalFrame2SZoom,out2)
 
         res = np.concatenate((bbox2, np.stack([out2 * 255, out2 * 255, out2 * 255], axis=-1)), 1)
-        cv2.imwrite("./results/Image_" + str(idx+1)+'.png', res)
-        # cv2.imshow("Image " + str(idx), res)
-        # cv2.waitKey(0)
+        cv2.imwrite("./results/" + ID + "/Image_" + str(idx+1)+'.png', res)
+        #cv2.imshow("Image", res)
+        #cv2.waitKey(1)
