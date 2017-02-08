@@ -72,10 +72,6 @@ def computeSpeed(block_to_search, region_to_explore, topRight):
     return speed
 
 def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, imgMask1, img2, imgMask2, iter, last_speed):
-
-    if frameID == 282:
-        casa = 8
-
     # Find elements in list, if there are no elements, we should create them.
     # Creating objects is only necessary for the first frame.
     if isFirstFrame:
@@ -173,7 +169,7 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
         else:
             isInfracting = False
             #img2 = drawCurrentBoundingBox(img2, indexObjectNumber, topLeft, bottomRight, isInfracting)
-            img2 = drawCurrentBoundingBox(img2, '', topLeft, bottomRight, isInfracting)
+            img2 = drawCurrentBoundingBox(img2, 'ID: ' + str(indexObjectNumber), topLeft, bottomRight, isInfracting)
 
     # Find detectedObjects that are not showing in image since 10 frames ago.
     # And remove them
