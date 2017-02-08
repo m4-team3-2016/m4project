@@ -42,7 +42,7 @@ class KalmanFilterClass:
         self.posterioriErrorX = (1-self.gainX)*self.prioriErrorX
         self.prioriEstimateX = self.currentPositionX
 
-        # Compute X update
+        # Compute Y update
         self.prioriErrorY = self.posterioriErrorY + self.Q
         self.gainY = self.prioriErrorY / (self.prioriErrorY + self.R)
         self.currentPositionY = self.prioriEstimateY + self.gainY * (currentPosition[1]-self.prioriEstimateY)

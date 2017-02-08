@@ -4,8 +4,10 @@ import numpy as np
 import glob
 import sys
 import os
-import Image
+#import Image
+from PIL import Image
 import scipy.misc
+import week5configuration as finalConf
 
 sys.path.append('../')
 operativeSystem = os.name
@@ -56,16 +58,18 @@ def compute_error(block1, block2):
 
 # Auxiliary function
 def block_search(region_to_explore, block_to_search):
-    block_size = conf.block_size
-    area_size = conf.area_size
+    block_sizeX = block_to_search.shape[0]
+    block_sizeY = block_to_search.shape[1]
+    area_size = finalConf.area_size
     x_size = region_to_explore.shape[0]
     y_size = region_to_explore.shape[1]
 
     min_diff = sys.float_info.max
-
-    for row in range(x_size-area_size):
-        for column in range(y_size-area_size):
-            block2analyse = region_to_explore[row:row+block_size, column:column+block_size]
+    x_mot = 0
+    y_mot = 0
+    for row in range(x_size-block_sizeX):
+        for column in range(y_size-block_sizeY):
+            block2analyse = region_to_explore[row:row+block_sizeX, column:column+block_sizeY]
             diff = compute_error(block2analyse, block_to_search)
             if diff < min_diff:
                 min_diff = diff
@@ -111,9 +115,11 @@ def compute_block_matching(prev_img, curr_img):
     return motion_matrix
 
 
+
 # def stabilizatePairOfImages( image1, image2) will stabilizate image2 respect
 # to image1. Thus, image1 must be previously stabilizated.
 def stabilizatePairOfImages( image1, image2):
+    # Comment this line if you do not want to stabilizate
     return image2
     # Inizializate variables
     block_size = conf.block_size

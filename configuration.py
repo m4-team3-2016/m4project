@@ -20,9 +20,10 @@ isMorphology = True
 fourConnectivity = True # If it is set to False, it will be 8 connectivity
 isShadowremoval = False
 
-noise_filter_size = 5
-vert_filter_size = 20
-horz_filter_size = 20
+noise_filter_size = 10
+little_filter_size = 20
+vert_filter_size = 30
+horz_filter_size = 15
 areaOptimal = 80
 
 # Best perfomance depending on the dataset that is trained

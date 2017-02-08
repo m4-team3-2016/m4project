@@ -15,6 +15,7 @@ import glob
 from skimage import measure
 import drawBoundingBox as dbb
 import detectedObject as dO
+import stabizateFrames as stFrame
 import cv2
 import inspect
 #import cv2.cv as cv
@@ -43,7 +44,10 @@ def drawCurrentBoundingBox(img_color, index, topLeft, bottomRight, isInfracting=
         color = (0, 255, 0)
     # Get the bbox image
     cv2.imwrite("testBefore.png", img_color)
-    bb_mask = dbb.drawBBoxWithText(img_color, 'ID: ' + str(int(index)), topLeft, bottomRight, color, alpha)
+
+    #bb_mask = dbb.drawBBoxWithText(img_color, 'ID: ' + str(float(index)), topLeft, bottomRight, color, alpha)
+    bb_mask = dbb.drawBBoxWithText(img_color, index, topLeft, bottomRight, color, alpha)
+
     # Find pixels where the object is
     coords = np.where(bb_mask <> 0)
     # Replace non-zero pixels in the current image by the bb_mask pixel intensities
@@ -54,7 +58,20 @@ def drawCurrentBoundingBox(img_color, index, topLeft, bottomRight, isInfracting=
     return oimg
 
 
-def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, imgMask1, img2, imgMask2):
+def computeSpeed(block_to_search, region_to_explore, topRight):
+    x_mot, y_mot = stFrame.block_search(region_to_explore, block_to_search)
+    increment = finalConf.referenceXPoint - topRight[1]
+    x_dist = (abs(x_mot) + finalConf.slideX * increment) * finalConf.pixels2metersX
+    y_dist = (abs(y_mot) + finalConf.slideY * increment) * finalConf.pixels2metersY
+    #y_dist = (abs(y_mot) - finalConf.slideY * increment) * finalConf.pixels2metersY
+    #y_dist = 0
+    #y_dist = abs(y_mot) * finalConf.pixels2metersY
+
+    modDistance = pow((x_dist) ** 2 + (y_dist) ** 2, 0.5)
+    speed = float(modDistance / 0.15) * 3.6 #Computed each 5 frames, so 0.16667 seconds each 5 frames
+    return speed
+
+def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, imgMask1, img2, imgMask2, iter, last_speed):
 
     if frameID == 282:
         casa = 8
@@ -75,11 +92,12 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
             finalConf.carCounting = finalConf.carCounting+1
             # Print Bounding boxes in image. Based on the indexObjectNumber detected or created
             isInfracting = False
-            img1 = drawCurrentBoundingBox(img1, idx, topLeft, bottomRight, isInfracting)
+            img1 = drawCurrentBoundingBox(img1, str(idx), topLeft, bottomRight, isInfracting)
 
     # Reset onScreenValues to detect which objects are in the current image
     for element in detectedObjects:
         element.setVisibleOnScreen(False)
+
     secondFrame = frameID+1
     # Compute the connected components
     cc = getConnectedComponents(imgMask2)
@@ -89,7 +107,9 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
         indexes = getLabelCoordinates(cc, idx)
         isFound = False
         topLeft = (min(indexes[1]), min(indexes[0]))
+        topRight = (min(indexes[1]), max(indexes[0]))
         bottomRight = (max(indexes[1]), max(indexes[0]))
+        bottomLeft = (max(indexes[1]), min(indexes[0]))
         centroid = [sum(indexes[0]) / len(indexes[0]), sum(indexes[1]) / len(indexes[1])]
 
         indexObjectNumber = 0
@@ -134,9 +154,26 @@ def computeTrackingBetweenFrames(isFirstFrame, detectedObjects, frameID, img1, i
             detectedObject = dO.detection(indexObjectNumber, secondFrame, topLeft, bottomRight, indexes)
             detectedObjects.append(detectedObject)
 
-        #Print Bounding boxes in image. Based on the indexObjectNumber detected or created
-        isInfracting = False
-        img2 = drawCurrentBoundingBox(img2, indexObjectNumber, topLeft, bottomRight, isInfracting)
+        # Search block marching for determining speed
+        if iter%5 == 0 or iter==1:
+            img2BW = cv2.cvtColor(img2.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+            img1BW = cv2.cvtColor(last_speed.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+            block_to_search = img2BW[topLeft[1]:topRight[1],topLeft[0]:bottomLeft[0]]
+            img1BW = np.pad(img1BW, ((finalConf.area_size, finalConf.area_size), (finalConf.area_size, finalConf.area_size)), 'symmetric')
+            region_to_explore = img1BW[topLeft[1]:topRight[1]+2*finalConf.area_size,topLeft[0]:bottomLeft[0]+2*finalConf.area_size]
+            speed = computeSpeed(block_to_search, region_to_explore, topRight)
+
+            #Print Bounding boxes in image. Based on the indexObjectNumber detected or created
+            if speed > 80.0:
+                isInfracting = True
+            else:
+                isInfracting = False
+            # img2 = drawCurrentBoundingBox(img2, indexObjectNumber, topLeft, bottomRight, isInfracting)
+            img2 = drawCurrentBoundingBox(img2, 'Speed: '+str("{0:.2f}".format(speed)), topLeft, bottomRight, isInfracting)
+        else:
+            isInfracting = False
+            #img2 = drawCurrentBoundingBox(img2, indexObjectNumber, topLeft, bottomRight, isInfracting)
+            img2 = drawCurrentBoundingBox(img2, '', topLeft, bottomRight, isInfracting)
 
     # Find detectedObjects that are not showing in image since 10 frames ago.
     # And remove them

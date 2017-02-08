@@ -81,7 +81,7 @@ class detection:
             return False
 
     def computeDistance(self, point1, point2):
-        distance = pow((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2,0.5)
+        distance = pow((point1[0]-point2[0])**2 + (point1[1]-point2[1])**4,0.5)
         return distance
 
     def getVector(self, a, b):

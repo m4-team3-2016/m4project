@@ -48,6 +48,7 @@ def getObjectsFromFrame(frame,mu,sigma,alpha, rho):
         out = mp.apply_morphology_noise(out, conf.noise_filter_size)
         out = mp.apply_morphology_vertline(out, conf.vert_filter_size)
         out = mp.apply_morphology_horzline(out, conf.horz_filter_size)
+        out = mp.apply_morphology_little( out, conf.little_filter_size, conf.little_filter_size)
     # Shadow removal
     if finalConf.isShadowremoval:
         out = sr.inmask_shadow_removal(frame, out)
@@ -133,7 +134,7 @@ def getMuSigma(data,trainingRange):
         mu = mu.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
         sigma = sigma.reshape(frame.shape[0], frame.shape[1], frame.shape[2])
 
-        mu = mu[finalConf.area_size:mu.shape[0] - finalConf.area_size, finalConf.area_size:mu.shape[1] - finalConf.area_size]
-        sigma = sigma[finalConf.area_size:sigma.shape[0] - finalConf.area_size,finalConf.area_size:sigma.shape[1] - finalConf.area_size]
+        # mu = mu[finalConf.area_size:mu.shape[0] - finalConf.area_size, finalConf.area_size:mu.shape[1] - finalConf.area_size]
+        # sigma = sigma[finalConf.area_size:sigma.shape[0] - finalConf.area_size,finalConf.area_size:sigma.shape[1] - finalConf.area_size]
 
     return mu, sigma, stabilizedFrame
